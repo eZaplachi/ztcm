@@ -3,7 +3,7 @@ use std::{error, fs, io};
 
 pub struct Config {
     pub query: String,
-    pub flag: String,
+    pub flags: Vec<String>,
 }
 
 impl Config {
@@ -14,51 +14,45 @@ impl Config {
             return Err("too many arguments");
         }
 
-
         let mut stripped_args = Vec::new();
         for arg in args {
-            if arg != "target/debug/ztcm" || arg != "ztc" {
+            if !arg.contains("ztc") {
                 stripped_args.push(arg.clone());
             }
-        };
+        }
 
+        let mut path = String::new();
+        let mut flags = Vec::new();
+
+        let help_message = "Usage: -h / -help:  show this help \n \n Run command:      ztcm [path('.' for cwd)] [flags] \n\n Flags: \n '-r': recursively search through the selected folder \n ";
 
         for arg in stripped_args {
             if !arg.contains("-") {
-                println!("Query folder: {}", arg);
+                if path.is_empty() {
+                    path = arg;
+                    println!("Path: {}", path);
+                } else {
+                    println!("More than one path found");
+                    return Err("Too many paths");
+                }
+            } else if arg.contains("-h") || arg.contains("-help") {
+                println!("{}", help_message);
+                return Err("Help flag called");
+            } else {
+                flags.push(arg)
             }
         }
 
-
-        let q = args[1].clone();
-
-
-        if !q.contains("-") && args.len() == 2 {
-            Ok(Config {
-                query: q,
-                flag: String::new(),
-            })
-        } else if q.contains("-h") || q.contains("-help") && args.len() == 2 {
-            println!("Usage: -h / -help:  show this help \n \n Run command:      ztcm [folder('.' for cwd)] [flags] \n
-             \n Flags: \n '-r': recursively search through the selected folder \n ");
-            Err("help")
-        } else {
-
-            Ok(Config {
-
-                query: q,
-                flag: args[2].clone(),
-            })
-        }
-
-        // Ok(Config { query, flag })
+        Ok(Config {
+            query: path,
+            flags: flags,
+        })
     }
 }
 
 pub fn run(config: Config) -> Result<Vec<String>, Box<dyn error::Error>> {
-    let set_options = config.flag;
-
-    if set_options == "-r" {
+    // Parse flags and runs with options
+    if config.flags.contains(&"-r".to_string()) {
         Ok(get_files_recursive(config.query.clone()))
     } else {
         Ok(get_files(config.query.clone()).unwrap())
@@ -95,15 +89,10 @@ fn get_files_recursive(directory: String) -> Vec<String> {
     for entry in glob(chosen_folder.as_str()).expect("Failed to read glob pattern") {
         if let Ok(path) = entry {
             css_file_paths.push(path.display().to_string());
-            // println!("{:?}", path.display())
         } else if let Err(e) = entry {
             println!("Glob error: {:?}", e)
         }
 
-        // match entry {
-            //     Ok(path) => println!("{:?}", path.display()),
-            //     Err(e) => println!("{:?}", e),
-            // }
-        }
-        css_file_paths
+    }
+    css_file_paths
 }

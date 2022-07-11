@@ -18,7 +18,9 @@ fn main() {
     });
 
 
-    println!("Found file: {:?}", css_path_names)
+    for path_name in css_path_names {
+        println!("Found file: {:?}", path_name);
+    }
 
     // for x in css_data {
     //     println!("{}", x);
