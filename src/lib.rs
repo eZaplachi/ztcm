@@ -1,6 +1,8 @@
 use glob::glob;
 use std::{error, fs, io};
 
+use regex::Regex;
+
 pub struct Config {
     pub query: String,
     pub flags: Vec<String>,
@@ -14,32 +16,26 @@ impl Config {
             return Err("too many arguments");
         }
 
-        let mut stripped_args = Vec::new();
-        for arg in args {
-            if !arg.contains("ztc") {
-                stripped_args.push(arg.clone());
-            }
-        }
-
         let mut path = String::new();
         let mut flags = Vec::new();
+        let help_message = "Usage: -h / -help:  show this help \n \n Run command:      ztcm [path('.' for cwd)] [flags] \n
+        \n Flags: \n '-r': recursively search through the selected folder \n '-w {Delay* (s)}': watches for changes in file every {Delay*} second(s); *Optional - Defaults to 1s";
 
-        let help_message = "Usage: -h / -help:  show this help \n \n Run command:      ztcm [path('.' for cwd)] [flags] \n\n Flags: \n '-r': recursively search through the selected folder \n ";
-
-        for arg in stripped_args {
-            if !arg.contains("-") {
-                if path.is_empty() {
-                    path = arg;
-                    println!("Path: {}", path);
-                } else {
-                    println!("More than one path found");
-                    return Err("Too many paths");
-                }
-            } else if arg.contains("-h") || arg.contains("-help") {
+        for arg in args {
+            if arg.contains("-h") || arg.contains("-help") {
                 println!("{}", help_message);
                 return Err("Help flag called");
-            } else {
-                flags.push(arg)
+            } else if !arg.contains("ztcm") {
+                if !arg.contains("-") {
+                    if path.is_empty() {
+                        path = arg.clone();
+                        print!("Path: {}\t\t", path);
+                    } else {
+                        flags.push(arg.clone());
+                    }
+                } else if !arg.contains(&path) {
+                    flags.push(arg.clone())
+                }
             }
         }
 
@@ -50,12 +46,38 @@ impl Config {
     }
 }
 
-pub fn run(config: Config) -> Result<Vec<String>, Box<dyn error::Error>> {
+pub fn run(config: Config) -> Result<(Vec<String>, f64), Box<dyn error::Error>> {
     // Parse flags and runs with options
-    if config.flags.contains(&"-r".to_string()) {
-        Ok(get_files_recursive(config.query.clone()))
+    let flags = config.flags.clone();
+    let flags_length = flags.clone().len();
+    let mut recursive = false;
+    let mut watch_delay: f64 = 0.0;
+    let default_watch_delay: f64 = 1.0;
+    let re = Regex::new(r"[0-9]").unwrap();
+
+    let mut i = 0;
+    for flag in flags.clone() {
+        if flag == "-r" {
+            print!("Recursive\t");
+            recursive = true;
+        } else if flag == "-w" {
+            print!("Watching\t");
+            watch_delay = default_watch_delay;
+            // If a delay arg is provided set watch_delay to that
+            if i + 1 < flags_length {
+                if re.is_match(flags[i + 1].as_str()) {
+                    watch_delay = flags[i + 1].parse().unwrap();
+                }
+            }
+            println!("Updates every {} s", watch_delay);
+        }
+        i += 1;
+    }
+
+    if recursive {
+        Ok((get_files_recursive(config.query.clone()), watch_delay))
     } else {
-        Ok(get_files(config.query.clone()).unwrap())
+        Ok((get_files(config.query.clone()).unwrap(), watch_delay))
     }
 }
 
@@ -70,16 +92,16 @@ fn get_files(directory: String) -> io::Result<Vec<String>> {
     entries.sort();
 
     // The entries have now been sorted by their path.
-    let mut css_files: Vec<String> = Vec::new();
+    let mut css_files_path: Vec<String> = Vec::new();
 
     for entry in entries {
         let entry_string: String = entry.as_path().display().to_string();
         let files = &entry_string.ends_with(".css");
         if files == &true {
-            css_files.push(entry_string.clone())
+            css_files_path.push(entry_string.clone())
         }
     }
-    Ok(css_files)
+    Ok(css_files_path)
 }
 
 fn get_files_recursive(directory: String) -> Vec<String> {
@@ -92,7 +114,6 @@ fn get_files_recursive(directory: String) -> Vec<String> {
         } else if let Err(e) = entry {
             println!("Glob error: {:?}", e)
         }
-
     }
     css_file_paths
 }
