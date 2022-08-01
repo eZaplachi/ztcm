@@ -1,7 +1,7 @@
 use glob::glob;
+use regex::Regex;
 use std::{error, fs, io};
 
-use regex::Regex;
 
 pub struct Config {
     pub query: String,
