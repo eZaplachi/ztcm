@@ -1,7 +1,8 @@
 use std::{env, process};
-use ztcm::Config;
-mod parser;
-use crate::parser::ParseRes;
+mod resolve_input;
+mod parse_and_printout;
+use resolve_input::Config;
+use parse_and_printout::ParseRes;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -11,7 +12,7 @@ fn main() {
         process::exit(1);
     });
 
-    let config_res = ztcm::run(config).unwrap_or_else(|err| {
+    let config_res = resolve_input::run(config).unwrap_or_else(|err| {
         println!("Problem parsing file paths: {}", err);
         process::exit(1);
     });
