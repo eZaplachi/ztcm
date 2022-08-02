@@ -1,12 +1,8 @@
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::collections::HashSet;
 use std::{fs, path, thread, time};
 
-pub struct ParseRes {
-    // file_res: Vec<String>,
-}
-// -> Result<Parse_res, &'static str>
+pub struct ParseRes {}
 impl ParseRes {
     pub fn parse_and_print_out(path_names: Vec<String>, watch_delay: f64) {
         for path in path_names.clone() {
@@ -25,7 +21,8 @@ impl ParseRes {
     }
 }
 
-fn find_classes_or_ids(text: &str) -> HashSet<&str> {
+// Regex functions
+fn find_classes_or_ids(text: &str) -> Vec<&str> {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"(?m)^[\.\#]\w*").unwrap();
     }
@@ -39,6 +36,7 @@ fn find_declarations(text: &str) -> Vec<&str> {
     RE.find_iter(text).map(|mat| mat.as_str()).collect()
 }
 
+// Logic function
 fn parse_files(path_names: &[String]) {
     for path in path_names {
         let (data_vec, outfile_name) = get_file_data(path);
@@ -46,21 +44,20 @@ fn parse_files(path_names: &[String]) {
     }
 }
 
+// Helper logic functions
 fn get_file_data(path: &String) -> (Vec<String>, String) {
     let mut out_names = Vec::new();
-    let re = Regex::new(r"[\.\#]").unwrap();
     let outfile_path = format!("{}.d.ts", path);
-    let contents = fs::read_to_string(path).expect("Something went wrong reading the file");
+    let contents = fs::read_to_string(path).expect("Something went wrong reading the .css file");
+    let re = Regex::new(r"[\.\#]").unwrap();
 
     let names = find_classes_or_ids(&contents);
+    // println!("{}", contents);
     for name in names {
         let parsed_name = re.replace_all(name, "");
         let out_name = format!("readonly '{}': string;", parsed_name);
         out_names.push(out_name)
-        // println!("{:?}", out_name)
     }
-
-    // println!("{:?}", out_names);
     (out_names, outfile_path)
 }
 
@@ -73,9 +70,8 @@ fn print_files(data_vec: Vec<String>, outfile_name: String) {
     if !path_exists {
         println!("Creating file: {}", outfile_name);
     } else {
-        _outfile_data = fs::read_to_string(&outfile_name).unwrap();
+        _outfile_data = fs::read_to_string(&outfile_name).expect("Something went wrong reading the .d.ts file");
         outfile_vec_set = find_declarations(&_outfile_data);
-        // println!("{:?}", outfile_vec_set);
     }
 
     let mut intermediate_string = String::new();
@@ -83,9 +79,7 @@ fn print_files(data_vec: Vec<String>, outfile_name: String) {
         intermediate_string = format!("{} {}\n", intermediate_string, data);
         for line in &outfile_vec_set {
             let formatted_line = format!("{};", line);
-            // println!("{}  :  {:?}\n", data, format!("{};", line));
             if data == formatted_line {
-                // println!("{}", data)
                 matching_value = true;
             }
         }
@@ -99,16 +93,30 @@ fn print_files(data_vec: Vec<String>, outfile_name: String) {
         "declare const styles: {{\n{}\n}};\nexport = styles;",
         intermediate_string
     );
-    // println!("{}", data_string);
 
-    // println!("{} \n {}", data_string, outfile_data);
     if print_out {
         fs::write(outfile_name.clone(), data_string)
             .expect("An Error creating deceleration file occurred");
         println!("Wrote to file: {}", outfile_name)
     }
-    // else {
-    //     println!("Finished")
-    // }
-    // println!("{:?}", path_exists)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn find_c_or_id() {
+        let class_or_id = find_classes_or_ids(".testClass \n#testId");
+        let class_or_id_expected = [".testClass", "#testId"];
+        assert_eq!(class_or_id, class_or_id_expected)
+    }
+
+    #[test]
+    fn find_decls() {
+        let declarations = find_declarations("readonly 'test': string;\n readonly 'test2': string;");
+        let declarations_expected = ["readonly 'test': string", "readonly 'test2': string"];
+        // println!("{:?}", declarations)
+        assert_eq!(declarations, declarations_expected)
+    }
 }

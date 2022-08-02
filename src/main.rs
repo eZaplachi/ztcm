@@ -7,7 +7,7 @@ use parse_and_printout::ParseRes;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    let config = Config::new(&args).unwrap_or_else(|err| {
+    let config = Config::new_args(&args).unwrap_or_else(|err| {
         println!("Problem parsing arguments: {}", err);
         process::exit(1);
     });

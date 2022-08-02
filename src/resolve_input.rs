@@ -9,7 +9,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(args: &[String]) -> Result<Config, &'static str> {
+    pub fn new_args(args: &[String]) -> Result<Config, &'static str> {
         if args.len() < 2 {
             return Err("not enough arguments");
         } else if args.len() > 5 {
@@ -58,18 +58,18 @@ pub fn run(config: Config) -> Result<(Vec<String>, f64), Box<dyn error::Error>> 
     let mut i = 0;
     for flag in flags.clone() {
         if flag == "-r" {
-            print!("Recursive\t");
+            print!("[Recursive]\t");
             recursive = true;
         } else if flag == "-w" {
-            print!("Watching\t");
+            print!("[Watching - ");
             watch_delay = default_watch_delay;
-            // If a delay arg is provided set watch_delay to that
+            // If a delay number is provided set watch_delay to that
             if i + 1 < flags_length {
                 if re.is_match(flags[i + 1].as_str()) {
                     watch_delay = flags[i + 1].parse().unwrap();
                 }
             }
-            println!("Updates every {} s", watch_delay);
+            println!("Updates every {} s]", watch_delay);
         }
         i += 1;
     }
@@ -108,7 +108,7 @@ fn get_files_recursive(directory: String) -> Vec<String> {
     let chosen_folder = directory + "/**/*.css";
 
     let mut css_file_paths: Vec<String> = Vec::new();
-    for entry in glob(chosen_folder.as_str()).expect("Failed to read glob pattern") {
+    for entry in glob(chosen_folder.as_str()).expect("Failed to read file names recursively") {
         if let Ok(path) = entry {
             css_file_paths.push(path.display().to_string());
         } else if let Err(e) = entry {
