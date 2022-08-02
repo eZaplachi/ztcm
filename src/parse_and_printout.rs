@@ -116,7 +116,6 @@ mod tests {
     fn find_decls() {
         let declarations = find_declarations("readonly 'test': string;\n readonly 'test2': string;");
         let declarations_expected = ["readonly 'test': string", "readonly 'test2': string"];
-        // println!("{:?}", declarations)
         assert_eq!(declarations, declarations_expected)
     }
 }
