@@ -52,7 +52,6 @@ fn get_file_data(path: &String) -> (Vec<String>, String) {
     let re = Regex::new(r"[\.\#]").unwrap();
 
     let names = find_classes_or_ids(&contents);
-    // println!("{}", contents);
     for name in names {
         let parsed_name = re.replace_all(name, "");
         let out_name = format!("readonly '{}': string;", parsed_name);

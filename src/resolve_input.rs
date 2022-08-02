@@ -9,6 +9,7 @@ pub struct Config {
 }
 
 impl Config {
+    // Convert args to Config format
     pub fn new_args(args: &[String]) -> Result<Config, &'static str> {
         if args.len() < 2 {
             return Err("not enough arguments");
@@ -47,7 +48,7 @@ impl Config {
 }
 
 pub fn run(config: Config) -> Result<(Vec<String>, f64), Box<dyn error::Error>> {
-    // Parse flags and runs with options
+    // Parse config and runs with flag options
     let flags = config.flags.clone();
     let flags_length = flags.clone().len();
     let mut recursive = false;
@@ -63,7 +64,7 @@ pub fn run(config: Config) -> Result<(Vec<String>, f64), Box<dyn error::Error>> 
         } else if flag == "-w" {
             print!("[Watching - ");
             watch_delay = default_watch_delay;
-            // If a delay number is provided set watch_delay to that
+            // If a delay number is provided set to watch_delay
             if i + 1 < flags_length {
                 if re.is_match(flags[i + 1].as_str()) {
                     watch_delay = flags[i + 1].parse().unwrap();
