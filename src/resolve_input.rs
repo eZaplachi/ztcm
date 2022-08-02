@@ -3,6 +3,8 @@ use regex::Regex;
 use std::{error, fs, io};
 
 
+
+
 pub struct Config {
     pub query: String,
     pub flags: Vec<String>,

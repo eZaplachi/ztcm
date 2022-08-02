@@ -1,6 +1,7 @@
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::{fs, path, thread, time};
+use std::{fs, path, thread, time, io};
+use std::io::prelude::*;
 
 pub struct ParseRes {}
 impl ParseRes {
@@ -10,10 +11,33 @@ impl ParseRes {
         }
         if watch_delay != 0.0 {
             let delay = time::Duration::from_secs_f64(watch_delay);
+            let mut load_state = 0;
+            let mut _load_char = "";
+            let mut i = 0;
             loop {
                 parse_files(&path_names);
 
                 thread::sleep(delay);
+
+                if i > 3 {
+                    i = 0;
+                    if load_state == 3 {
+                        load_state = 0;
+                    }
+                    _load_char = match load_state {
+                        0 => "/",
+                        1 => "-",
+                        2 => "\\",
+                        3 => "|",
+                        _ => "*"
+                    };
+
+
+                    load_state += 1;
+                    print!("\r[{}]", _load_char);
+                    io::stdout().flush().ok().expect("Could not flush stdout");
+                }
+                i += 1;
             }
         } else {
             parse_files(&path_names);
@@ -46,9 +70,9 @@ fn parse_files(path_names: &[String]) {
 
 // Helper logic functions
 fn get_file_data(path: &String) -> (Vec<String>, String) {
-    let mut out_names = Vec::new();
     let outfile_path = format!("{}.d.ts", path);
     let contents = fs::read_to_string(path).expect("Something went wrong reading the .css file");
+    let mut out_names = Vec::new();
     let re = Regex::new(r"[\.\#]").unwrap();
 
     let names = find_classes_or_ids(&contents);
@@ -96,7 +120,7 @@ fn print_files(data_vec: Vec<String>, outfile_name: String) {
     if print_out {
         fs::write(outfile_name.clone(), data_string)
             .expect("An Error creating deceleration file occurred");
-        println!("Wrote to file: {}", outfile_name)
+        println!("\rWrote to file: {}", outfile_name)
     }
 }
 
