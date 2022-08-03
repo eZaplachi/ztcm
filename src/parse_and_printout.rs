@@ -19,6 +19,7 @@ impl ParseRes {
 
                 thread::sleep(delay);
 
+                // Loading icon logic
                 if i > 3 {
                     i = 0;
                     if load_state == 3 {
@@ -145,16 +146,44 @@ mod tests {
 
     #[test]
     fn parse_f() {
-        let paths_expected = ("./test/test.module.css", "./test/recursive_test/test_r.module.css");
+        let paths_expected = (
+            "./test/test.module.css",
+            "./test/recursive_test/test_r.module.css",
+        );
         parse_files(&[paths_expected.0.to_string(), paths_expected.1.to_string()]);
-        let path_exists = (path::Path::new(paths_expected.0).exists(), path::Path::new(paths_expected.1).exists());
+        let path_exists = (
+            path::Path::new(paths_expected.0).exists(),
+            path::Path::new(paths_expected.1).exists(),
+        );
         // println!("{}", path_exists)
         assert_eq!(path_exists, (true, true))
-
     }
 
     #[test]
     fn get_f_data() {
-        
+        let file_data_expected: (Vec<String>, String) = (
+            vec![
+                "readonly 'testClass': string;".to_string(),
+                "readonly 'testId': string;".to_string(),
+            ],
+            "./test/test.module.css.d.ts".to_string(),
+        );
+        let file_data = get_file_data(&"./test/test.module.css".to_string());
+        // println!("{:?}", file_data)
+        assert_eq!(file_data, file_data_expected)
+    }
+
+    #[test]
+    fn get_f_r_data() {
+        let file_data_expected: (Vec<String>, String) = (
+            vec![
+                "readonly 'RtestClass': string;".to_string(),
+                "readonly 'RtestId': string;".to_string(),
+            ],
+            "./test/recursive_test/test_r.module.css.d.ts".to_string(),
+        );
+        let file_data = get_file_data(&"./test/recursive_test/test_r.module.css".to_string());
+        // println!("{:?}", file_data)
+        assert_eq!(file_data, file_data_expected)
     }
 }
