@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::{fs, path, thread, time, io};
 use std::io::prelude::*;
+use std::{fs, io, path, thread, time};
 
 pub struct ParseRes {}
 impl ParseRes {
@@ -29,9 +29,8 @@ impl ParseRes {
                         1 => "-",
                         2 => "\\",
                         3 => "|",
-                        _ => "*"
+                        _ => "*",
                     };
-
 
                     load_state += 1;
                     print!("\r[{}]", _load_char);
@@ -93,7 +92,8 @@ fn print_files(data_vec: Vec<String>, outfile_name: String) {
     if !path_exists {
         println!("Creating file: {}", outfile_name);
     } else {
-        _outfile_data = fs::read_to_string(&outfile_name).expect("Something went wrong reading the .d.ts file");
+        _outfile_data =
+            fs::read_to_string(&outfile_name).expect("Something went wrong reading the .d.ts file");
         outfile_vec_set = find_declarations(&_outfile_data);
     }
 
@@ -137,8 +137,24 @@ mod tests {
 
     #[test]
     fn find_decls() {
-        let declarations = find_declarations("readonly 'test': string;\n readonly 'test2': string;");
+        let declarations =
+            find_declarations("readonly 'test': string;\n readonly 'test2': string;");
         let declarations_expected = ["readonly 'test': string", "readonly 'test2': string"];
         assert_eq!(declarations, declarations_expected)
+    }
+
+    #[test]
+    fn parse_f() {
+        let paths_expected = ("./test/test.module.css", "./test/recursive_test/test_r.module.css");
+        parse_files(&[paths_expected.0.to_string(), paths_expected.1.to_string()]);
+        let path_exists = (path::Path::new(paths_expected.0).exists(), path::Path::new(paths_expected.1).exists());
+        // println!("{}", path_exists)
+        assert_eq!(path_exists, (true, true))
+
+    }
+
+    #[test]
+    fn get_f_data() {
+        
     }
 }

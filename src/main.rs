@@ -12,7 +12,7 @@ fn main() {
         process::exit(1);
     });
 
-    let config_res = resolve_input::run(config).unwrap_or_else(|err| {
+    let config_res = resolve_input::run_ztcm(config).unwrap_or_else(|err| {
         println!("Problem parsing file paths: {}", err);
         process::exit(1);
     });

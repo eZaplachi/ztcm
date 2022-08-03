@@ -1,5 +1,6 @@
 /target
-/test
 *.css
 *.ts
 *.d.ts
+!test.module.css
+!test_r.module.css

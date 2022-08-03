@@ -2,9 +2,6 @@ use glob::glob;
 use regex::Regex;
 use std::{error, fs, io};
 
-
-
-
 pub struct Config {
     pub query: String,
     pub flags: Vec<String>,
@@ -49,7 +46,7 @@ impl Config {
     }
 }
 
-pub fn run(config: Config) -> Result<(Vec<String>, f64), Box<dyn error::Error>> {
+pub fn run_ztcm(config: Config) -> Result<(Vec<String>, f64), Box<dyn error::Error>> {
     // Parse config and runs with flag options
     let flags = config.flags.clone();
     let flags_length = flags.clone().len();
@@ -119,4 +116,44 @@ fn get_files_recursive(directory: String) -> Vec<String> {
         }
     }
     css_file_paths
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn get_file() {
+        let mut test_output_found = false;
+        let test_output_expected = "./test/test.module.css";
+
+        let files = get_files("./test".to_string()).unwrap();
+        for file in files {
+            if file == test_output_expected {
+                test_output_found = true;
+            }
+        }
+
+        assert_eq!(test_output_found, true)
+    }
+
+    #[test]
+    fn get_file_r() {
+        let mut test_output_found = (false, false);
+        let test_output_expected = (
+            "test/test.module.css",
+            "test/recursive_test/test_r.module.css",
+        );
+
+        let files_r = get_files_recursive("./test".to_string());
+        for file in files_r {
+            if file == test_output_expected.0 {
+                test_output_found.0 = true;
+            }
+            if file == test_output_expected.1 {
+                test_output_found.1 = true;
+            }
+        }
+        assert_eq!(test_output_found, (true, true))
+    }
 }
