@@ -2,7 +2,7 @@
 name = "ztcm"
 version = "0.1.0"
 edition = "2021"
-authors = "Evan Zaplachinski"
+authors = ["Evan Zaplachinski"]
 description = "A simple rust implementation of Typed Css Modules"
 readme = "README.md"
 repository = "https://github.com/eZaplachi/ztcm"
