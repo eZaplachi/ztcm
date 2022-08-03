@@ -57,9 +57,7 @@ mod tests {
         let test_output_expected = ("test/test.module.css", 0.0);
         let config: Config = Config::new_args(&["ztcm".to_string(), "test".to_string()]).unwrap();
         let run_res = resolve_input::run_ztcm(config).unwrap();
-        // println!("{:?}", run_res)
         for pathname in run_res.0 {
-            // println!("{}", pathname);
             if pathname == test_output_expected.0 {
                 test_output_found.0 = true;
             }
