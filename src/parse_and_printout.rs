@@ -48,14 +48,14 @@ impl ParseRes {
 // Regex functions
 fn find_classes_or_ids(text: &str) -> Vec<&str> {
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"(?m)^[\.\#]\w*").unwrap();
+        static ref RE: Regex = Regex::new(r"(?m)^[\.\#]\S*").unwrap();
     }
     RE.find_iter(text).map(|mat| mat.as_str()).collect()
 }
 
 fn find_declarations(text: &str) -> Vec<&str> {
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"readonly '\w*': \w*").unwrap();
+        static ref RE: Regex = Regex::new(r"readonly '\S*': \w*").unwrap();
     }
     RE.find_iter(text).map(|mat| mat.as_str()).collect()
 }
