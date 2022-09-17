@@ -5,7 +5,7 @@ use std::{fs, io, path, thread, time};
 
 pub struct ParseRes {}
 impl ParseRes {
-    pub fn parse_and_print_out(path_names: Vec<String>, watch_delay: f64) {
+    pub fn parse_and_print_out(path_names: Vec<String>, camel_case_flag: bool, watch_delay: f64) {
         for path in path_names.clone() {
             println!("\nFound: {}", path);
         }
@@ -15,7 +15,7 @@ impl ParseRes {
             let mut _load_char = "";
             let mut i = 0;
             loop {
-                parse_files(&path_names);
+                parse_files(&path_names, camel_case_flag);
 
                 thread::sleep(delay);
 
@@ -40,7 +40,7 @@ impl ParseRes {
                 i += 1;
             }
         } else {
-            parse_files(&path_names);
+            parse_files(&path_names, camel_case_flag);
         }
     }
 }
@@ -60,23 +60,38 @@ fn find_declarations(text: &str) -> Vec<&str> {
     RE.find_iter(text).map(|mat| mat.as_str()).collect()
 }
 
+fn camel_case_converter(text: &str) {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"-").unwrap();
+    }
+    let out = RE.split(text);
+    println!("{:?}", out)
+}
+
 // Logic function
-fn parse_files(path_names: &[String]) {
+fn parse_files(path_names: &[String], camel_case_flag: bool) {
     for path in path_names {
-        let (data_vec, outfile_name) = get_file_data(path);
+        let (data_vec, outfile_name) = get_file_data(path, camel_case_flag);
         print_files(data_vec, outfile_name);
     }
 }
 
 // Helper logic functions
-fn get_file_data(path: &String) -> (Vec<String>, String) {
+fn get_file_data(path: &String, camel_case_flag: bool) -> (Vec<String>, String) {
     let outfile_path = format!("{}.d.ts", path);
     let contents = fs::read_to_string(path).expect("Something went wrong reading the .css file");
     let mut out_names = Vec::new();
     let re = Regex::new(r"[\.\#]").unwrap();
+    let remove_hyphen = Regex::new(r"-").unwrap();
 
     let names = find_classes_or_ids(&contents);
-    for name in names {
+    for mut name in names {
+        if camel_case_flag {
+            // println!("{:?}", names)
+            camel_case_converter(name);
+            // let name = remove_hyphen.replace_all(intermediate_name, "");
+            // println!("{:?}", intermediate_name)
+        }
         let parsed_name = re.replace_all(name, "");
         let out_name = format!("readonly '{}': string;", parsed_name);
         out_names.push(out_name)
@@ -150,7 +165,7 @@ mod tests {
             "./test/test.module.css",
             "./test/recursive_test/test_r.module.css",
         );
-        parse_files(&[paths_expected.0.to_string(), paths_expected.1.to_string()]);
+        parse_files(&[paths_expected.0.to_string(), paths_expected.1.to_string()], false);
         let path_exists = (
             path::Path::new(paths_expected.0).exists(),
             path::Path::new(paths_expected.1).exists(),
@@ -163,12 +178,12 @@ mod tests {
     fn get_f_data() {
         let file_data_expected: (Vec<String>, String) = (
             vec![
-                "readonly 'testClass': string;".to_string(),
-                "readonly 'testId': string;".to_string(),
+                "readonly 'test-class': string;".to_string(),
+                "readonly 'test-Id': string;".to_string(),
             ],
             "./test/test.module.css.d.ts".to_string(),
         );
-        let file_data = get_file_data(&"./test/test.module.css".to_string());
+        let file_data = get_file_data(&"./test/test.module.css".to_string(), false);
         // println!("{:?}", file_data)
         assert_eq!(file_data, file_data_expected)
     }
@@ -182,7 +197,7 @@ mod tests {
             ],
             "./test/recursive_test/test_r.module.css.d.ts".to_string(),
         );
-        let file_data = get_file_data(&"./test/recursive_test/test_r.module.css".to_string());
+        let file_data = get_file_data(&"./test/recursive_test/test_r.module.css".to_string(), false);
         // println!("{:?}", file_data)
         assert_eq!(file_data, file_data_expected)
     }

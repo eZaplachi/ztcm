@@ -17,7 +17,7 @@ fn main() {
         process::exit(1);
     });
 
-    ParseRes::parse_and_print_out(config_res.0, config_res.1);
+    ParseRes::parse_and_print_out(config_res.0, config_res.1, config_res.2);
 }
 
 #[cfg(test)]
@@ -62,7 +62,7 @@ mod tests {
                 test_output_found.0 = true;
             }
         }
-        if run_res.1 == test_output_expected.1 {
+        if run_res.2 == test_output_expected.1 {
             test_output_found.1 = true;
         }
         assert_eq!(test_output_found, (true, true))
@@ -86,7 +86,7 @@ mod tests {
                 test_output_found.1 = true;
             }
         }
-        if run_res.1 == test_output_expected.2 {
+        if run_res.2 == test_output_expected.2 {
             test_output_found.2 = true;
         }
         assert_eq!(test_output_found, (true, true, true))
@@ -103,7 +103,7 @@ mod tests {
             if pathname == test_output_expected.0 {
                 test_output_found.0 = true;
             }
-            if run_res.1 == test_output_expected.1 {
+            if run_res.2 == test_output_expected.1 {
                 test_output_found.1 = true;
             }
             assert_eq!(test_output_found, (true, true))

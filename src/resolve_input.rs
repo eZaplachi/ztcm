@@ -12,7 +12,7 @@ impl Config {
     pub fn new_args(args: &[String]) -> Result<Config, &'static str> {
         if args.len() < 2 {
             return Err("not enough arguments");
-        } else if args.len() > 5 {
+        } else if args.len() > 6 {
             return Err("too many arguments");
         }
 
@@ -46,13 +46,14 @@ impl Config {
     }
 }
 
-pub fn run_ztcm(config: Config) -> Result<(Vec<String>, f64), Box<dyn error::Error>> {
+pub fn run_ztcm(config: Config) -> Result<(Vec<String>, bool, f64), Box<dyn error::Error>> {
     // Parse config and runs with flag options
     let flags = config.flags.clone();
     let flags_length = flags.clone().len();
     let mut recursive = false;
     let mut watch_delay: f64 = 0.0;
     let default_watch_delay: f64 = 1.0;
+    let mut camel_case_flag: bool = false;
     let re = Regex::new(r"[0-9]").unwrap();
 
     let mut i = 0;
@@ -60,6 +61,8 @@ pub fn run_ztcm(config: Config) -> Result<(Vec<String>, f64), Box<dyn error::Err
         if flag == "-r" {
             print!("[Recursive]\t");
             recursive = true;
+        } else if flag == "-c" {
+            camel_case_flag = true;
         } else if flag == "-w" {
             print!("[Watching - ");
             watch_delay = default_watch_delay;
@@ -75,9 +78,9 @@ pub fn run_ztcm(config: Config) -> Result<(Vec<String>, f64), Box<dyn error::Err
     }
 
     if recursive {
-        Ok((get_files_recursive(config.query.clone()), watch_delay))
+        Ok((get_files_recursive(config.query.clone()), camel_case_flag, watch_delay))
     } else {
-        Ok((get_files(config.query.clone()).unwrap(), watch_delay))
+        Ok((get_files(config.query.clone()).unwrap(), camel_case_flag, watch_delay))
     }
 }
 
