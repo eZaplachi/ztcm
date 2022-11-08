@@ -60,12 +60,55 @@ fn find_declarations(text: &str) -> Vec<&str> {
     RE.find_iter(text).map(|mat| mat.as_str()).collect()
 }
 
-fn camel_case_converter(text: &str) {
+fn car_cdr(s: &str) -> (&str, &str) {
+    for i in 1..5 {
+        let r = s.get(0..i);
+        match r {
+            Some(x) => return (x, &s[i..]),
+            None => (),
+        }
+    }
+
+    (&s[0..0], s)
+}
+
+fn camel_case_converter(text: &str) -> String{
     lazy_static! {
         static ref RE: Regex = Regex::new(r"-").unwrap();
     }
-    let out = RE.split(text);
-    println!("{:?}", out)
+    let out: Vec<&str> = RE.split(&text).collect();
+    let mut names: Vec<String> = Vec::new();
+    for word in out {
+        // println!("Word: {:?}", word);
+        let (first_char, remainder) = car_cdr(word);
+        // println!("first char: {}\nremainder: {}", first_char, remainder);
+        let name_indiv: String = uppercase_fist_letter(first_char, remainder);
+        names.push(name_indiv);
+        // println!("Name: {:?}", name)
+
+    }
+    let mut parsed_name = String::new();
+    for name in names {
+        parsed_name = parsed_name + &name
+    }
+    return parsed_name
+    // let split_names = text.split("-");
+}
+
+fn uppercase_fist_letter(first_char: &str, remainder: &str) -> String {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"^\w").unwrap();
+    }
+
+    if RE.is_match(first_char) {
+        let formatted_first_char_upper = &first_char.to_uppercase();
+        return formatted_first_char_upper.to_string() + &remainder
+    } else {
+        let (intermediate_first_char, intermediate_remainder) = car_cdr(&remainder);
+        let formatted_first_char_lower = &intermediate_first_char.to_lowercase();
+        return formatted_first_char_lower.to_string() + &intermediate_remainder
+    }
+
 }
 
 // Logic function
@@ -82,20 +125,24 @@ fn get_file_data(path: &String, camel_case_flag: bool) -> (Vec<String>, String) 
     let contents = fs::read_to_string(path).expect("Something went wrong reading the .css file");
     let mut out_names = Vec::new();
     let re = Regex::new(r"[\.\#]").unwrap();
-    let remove_hyphen = Regex::new(r"-").unwrap();
-
+    let mut out_name = String::new();
     let names = find_classes_or_ids(&contents);
-    for mut name in names {
+    for name in names {
         if camel_case_flag {
             // println!("{:?}", names)
-            camel_case_converter(name);
+            let camel_name = camel_case_converter(name);
+            // println!("New name: {:?}", camel_name)
+            out_name = format!("readonly '{}': string;", camel_name);
+            out_names.push(out_name)
             // let name = remove_hyphen.replace_all(intermediate_name, "");
             // println!("{:?}", intermediate_name)
+        } else {
+            let parsed_name = re.replace_all(name, "");
+            out_name = format!("readonly '{}': string;", parsed_name);
+            out_names.push(out_name)
         }
-        let parsed_name = re.replace_all(name, "");
-        let out_name = format!("readonly '{}': string;", parsed_name);
-        out_names.push(out_name)
     }
+    // println!("{:?}", out_names);
     (out_names, outfile_path)
 }
 
@@ -139,6 +186,7 @@ fn print_files(data_vec: Vec<String>, outfile_name: String) {
         println!("\rWrote to file: {}", outfile_name)
     }
 }
+// TODO: camel case testing
 
 #[cfg(test)]
 mod tests {
