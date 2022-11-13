@@ -87,6 +87,19 @@ fn format_fist_letter(first_char: &str, remainder: &str) -> String {
     }
 }
 
+fn remove_modifiers(text: &str) -> &str {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"\:").unwrap();
+    }
+    let mut __parsed_name = Vec::new();
+    if RE.is_match(&text) {
+        __parsed_name = RE.split(&text).collect();
+        return __parsed_name[0];
+    } else {
+        return text;
+    }
+}
+
 fn camel_case_converter(text: &str) -> String {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"-").unwrap();
@@ -95,7 +108,8 @@ fn camel_case_converter(text: &str) -> String {
     let mut names: Vec<String> = Vec::new();
     for word in out {
         // println!("Word: {:?}", word);
-        let (first_char, remainder) = car_cdr(word);
+        let parsed_name = remove_modifiers(word);
+        let (first_char, remainder) = car_cdr(parsed_name);
         // println!("first char: {}\nremainder: {}", first_char, remainder);
         let name_indiv: String = format_fist_letter(first_char, remainder);
         names.push(name_indiv);
@@ -230,6 +244,12 @@ mod tests {
     }
 
     #[test]
+    fn remove_mods() {
+        let parsed_name = remove_modifiers("test:modifiers");
+        assert_eq!(parsed_name, "test")
+    }
+
+    #[test]
     fn format_cc() {
         let first_word = format_fist_letter(".", "Test");
         let subsequent_word = format_fist_letter("t", "est");
@@ -239,7 +259,7 @@ mod tests {
 
     #[test]
     fn camel_case() {
-        let name = camel_case_converter(".Hello-world");
+        let name = camel_case_converter(".Hello-world:modifiers");
         assert_eq!(name, "helloWorld");
     }
 
