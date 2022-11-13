@@ -78,9 +78,17 @@ pub fn run_ztcm(config: Config) -> Result<(Vec<String>, bool, f64), Box<dyn erro
     }
 
     if recursive {
-        Ok((get_files_recursive(config.query.clone()), camel_case_flag, watch_delay))
+        Ok((
+            get_files_recursive(config.query.clone()),
+            camel_case_flag,
+            watch_delay,
+        ))
     } else {
-        Ok((get_files(config.query.clone()).unwrap(), camel_case_flag, watch_delay))
+        Ok((
+            get_files(config.query.clone()).unwrap(),
+            camel_case_flag,
+            watch_delay,
+        ))
     }
 }
 
