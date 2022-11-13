@@ -5,7 +5,7 @@ use std::{fs, io, path, thread, time};
 
 pub struct ParseRes {}
 impl ParseRes {
-    pub fn parse_and_print_out(path_names: Vec<String>, watch_delay: f64) {
+    pub fn parse_and_print_out(path_names: Vec<String>, camel_case_flag: bool, watch_delay: f64) {
         for path in path_names.clone() {
             println!("\nFound: {}", path);
         }
@@ -15,7 +15,7 @@ impl ParseRes {
             let mut _load_char = "";
             let mut i = 0;
             loop {
-                parse_files(&path_names);
+                parse_files(&path_names, camel_case_flag);
 
                 thread::sleep(delay);
 
@@ -40,7 +40,7 @@ impl ParseRes {
                 i += 1;
             }
         } else {
-            parse_files(&path_names);
+            parse_files(&path_names, camel_case_flag);
         }
     }
 }
@@ -48,39 +48,99 @@ impl ParseRes {
 // Regex functions
 fn find_classes_or_ids(text: &str) -> Vec<&str> {
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"(?m)^[\.\#]\w*").unwrap();
+        static ref RE: Regex = Regex::new(r"(?m)^[\.\#]\S*").unwrap();
     }
     RE.find_iter(text).map(|mat| mat.as_str()).collect()
 }
 
 fn find_declarations(text: &str) -> Vec<&str> {
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"readonly '\w*': \w*").unwrap();
+        static ref RE: Regex = Regex::new(r"readonly '\S*': \w*").unwrap();
     }
     RE.find_iter(text).map(|mat| mat.as_str()).collect()
 }
 
+fn car_cdr(s: &str) -> (&str, &str) {
+    for i in 1..5 {
+        let r = s.get(0..i);
+        match r {
+            Some(x) => return (x, &s[i..]),
+            None => (),
+        }
+    }
+
+    (&s[0..0], s)
+}
+
+fn format_fist_letter(first_char: &str, remainder: &str) -> String {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"^\w").unwrap();
+    }
+
+    if RE.is_match(first_char) {
+        let formatted_first_char_upper = &first_char.to_uppercase();
+        return formatted_first_char_upper.to_string() + &remainder;
+    } else {
+        let (intermediate_first_char, intermediate_remainder) = car_cdr(&remainder);
+        let formatted_first_char_lower = &intermediate_first_char.to_lowercase();
+        return formatted_first_char_lower.to_string() + &intermediate_remainder;
+    }
+}
+
+fn camel_case_converter(text: &str) -> String {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"-").unwrap();
+    }
+    let out: Vec<&str> = RE.split(&text).collect();
+    let mut names: Vec<String> = Vec::new();
+    for word in out {
+        // println!("Word: {:?}", word);
+        let (first_char, remainder) = car_cdr(word);
+        // println!("first char: {}\nremainder: {}", first_char, remainder);
+        let name_indiv: String = format_fist_letter(first_char, remainder);
+        names.push(name_indiv);
+        // println!("Name: {:?}", name)
+    }
+    let mut parsed_name = String::new();
+    for name in names {
+        parsed_name = parsed_name + &name
+    }
+    return parsed_name;
+    // let split_names = text.split("-");
+}
+
 // Logic function
-fn parse_files(path_names: &[String]) {
+fn parse_files(path_names: &[String], camel_case_flag: bool) {
     for path in path_names {
-        let (data_vec, outfile_name) = get_file_data(path);
+        let (data_vec, outfile_name) = get_file_data(path, camel_case_flag);
         print_files(data_vec, outfile_name);
     }
 }
 
 // Helper logic functions
-fn get_file_data(path: &String) -> (Vec<String>, String) {
+fn get_file_data(path: &String, camel_case_flag: bool) -> (Vec<String>, String) {
     let outfile_path = format!("{}.d.ts", path);
     let contents = fs::read_to_string(path).expect("Something went wrong reading the .css file");
     let mut out_names = Vec::new();
     let re = Regex::new(r"[\.\#]").unwrap();
-
+    let mut __out_name = String::new();
     let names = find_classes_or_ids(&contents);
     for name in names {
-        let parsed_name = re.replace_all(name, "");
-        let out_name = format!("readonly '{}': string;", parsed_name);
-        out_names.push(out_name)
+        if camel_case_flag {
+            // println!("{:?}", names)
+            let camel_name = camel_case_converter(name);
+            // println!("New name: {:?}", camel_name)
+            __out_name = format!("readonly '{}': string;", camel_name);
+            out_names.push(__out_name)
+            // let name = remove_hyphen.replace_all(intermediate_name, "");
+            // println!("{:?}", intermediate_name)
+        } else {
+            let parsed_name = re.replace_all(name, "");
+            __out_name = format!("readonly '{}': string;", parsed_name);
+            out_names.push(__out_name)
+        }
     }
+    // println!("{:?}", out_names);
     (out_names, outfile_path)
 }
 
@@ -125,6 +185,7 @@ fn print_files(data_vec: Vec<String>, outfile_name: String) {
     }
 }
 
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -150,7 +211,10 @@ mod tests {
             "./test/test.module.css",
             "./test/recursive_test/test_r.module.css",
         );
-        parse_files(&[paths_expected.0.to_string(), paths_expected.1.to_string()]);
+        parse_files(
+            &[paths_expected.0.to_string(), paths_expected.1.to_string()],
+            false,
+        );
         let path_exists = (
             path::Path::new(paths_expected.0).exists(),
             path::Path::new(paths_expected.1).exists(),
@@ -160,15 +224,36 @@ mod tests {
     }
 
     #[test]
+    fn split_string() {
+        let (first_char, remainder) = car_cdr("test");
+        assert_eq!(first_char, "t");
+        assert_eq!(remainder, "est")
+    }
+
+    #[test]
+    fn format_cc() {
+        let first_word = format_fist_letter(".", "Test");
+        let subsequent_word = format_fist_letter("t", "est");
+        assert_eq!(first_word, "test");
+        assert_eq!(subsequent_word, "Test")
+    }
+
+    #[test]
+    fn camel_case() {
+        let name = camel_case_converter(".Hello-world");
+        assert_eq!(name, "helloWorld");
+    }
+
+    #[test]
     fn get_f_data() {
         let file_data_expected: (Vec<String>, String) = (
             vec![
-                "readonly 'testClass': string;".to_string(),
-                "readonly 'testId': string;".to_string(),
+                "readonly 'test-class': string;".to_string(),
+                "readonly 'test-Id': string;".to_string(),
             ],
             "./test/test.module.css.d.ts".to_string(),
         );
-        let file_data = get_file_data(&"./test/test.module.css".to_string());
+        let file_data = get_file_data(&"./test/test.module.css".to_string(), false);
         // println!("{:?}", file_data)
         assert_eq!(file_data, file_data_expected)
     }
@@ -177,12 +262,15 @@ mod tests {
     fn get_f_r_data() {
         let file_data_expected: (Vec<String>, String) = (
             vec![
-                "readonly 'RtestClass': string;".to_string(),
+                "readonly 'R-test-Class': string;".to_string(),
                 "readonly 'RtestId': string;".to_string(),
             ],
             "./test/recursive_test/test_r.module.css.d.ts".to_string(),
         );
-        let file_data = get_file_data(&"./test/recursive_test/test_r.module.css".to_string());
+        let file_data = get_file_data(
+            &"./test/recursive_test/test_r.module.css".to_string(),
+            false,
+        );
         // println!("{:?}", file_data)
         assert_eq!(file_data, file_data_expected)
     }
