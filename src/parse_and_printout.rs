@@ -102,20 +102,16 @@ fn camel_case_converter(text: &str) -> String {
     let out: Vec<&str> = RE.split(text).collect();
     let mut names: Vec<String> = Vec::new();
     for word in out {
-        // println!("Word: {:?}", word);
         let parsed_name = remove_modifiers(word);
         let (first_char, remainder) = split_first_char(parsed_name);
-        // println!("first char: {}\nremainder: {}", first_char, remainder);
         let name_indiv: String = format_fist_letter(first_char, remainder);
         names.push(name_indiv);
-        // println!("Name: {:?}", name)
     }
     let mut parsed_name = String::new();
     for name in names {
         parsed_name = parsed_name + &name
     }
     parsed_name
-    // let split_names = text.split("-");
 }
 
 // Logic function
@@ -136,20 +132,15 @@ fn get_file_data(path: &String, camel_case_flag: bool) -> (Vec<String>, String) 
     let names = find_classes_or_ids(&contents);
     for name in names {
         if camel_case_flag {
-            // println!("{:?}", names)
             let camel_name = camel_case_converter(name);
-            // println!("New name: {:?}", camel_name)
             __out_name = format!("readonly '{}': string;", camel_name);
             out_names.push(__out_name)
-            // let name = remove_hyphen.replace_all(intermediate_name, "");
-            // println!("{:?}", intermediate_name)
         } else {
             let parsed_name = re.replace_all(name, "");
             __out_name = format!("readonly '{}': string;", parsed_name);
             out_names.push(__out_name)
         }
     }
-    // println!("{:?}", out_names);
     (out_names, outfile_path)
 }
 
@@ -227,7 +218,6 @@ mod tests {
             path::Path::new(paths_expected.0).exists(),
             path::Path::new(paths_expected.1).exists(),
         );
-        // println!("{}", path_exists)
         assert_eq!(path_exists, (true, true))
     }
 
@@ -268,7 +258,6 @@ mod tests {
             "./test/test.module.css.d.ts".to_string(),
         );
         let file_data = get_file_data(&"./test/test.module.css".to_string(), false);
-        // println!("{:?}", file_data)
         assert_eq!(file_data, file_data_expected)
     }
 
@@ -285,7 +274,6 @@ mod tests {
             &"./test/recursive_test/test_r.module.css".to_string(),
             false,
         );
-        // println!("{:?}", file_data)
         assert_eq!(file_data, file_data_expected)
     }
 }
