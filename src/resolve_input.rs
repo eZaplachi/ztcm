@@ -26,7 +26,7 @@ impl Config {
                 println!("{}", help_message);
                 return Err("Help flag called");
             } else if !arg.contains("ztcm") {
-                if !arg.contains("-") {
+                if !arg.contains('-') {
                     if path.is_empty() {
                         path = arg.clone();
                         print!("Path: {}\t\t", path);
@@ -39,25 +39,21 @@ impl Config {
             }
         }
 
-        Ok(Config {
-            query: path,
-            flags: flags,
-        })
+        Ok(Config { query: path, flags })
     }
 }
 
 pub fn run_ztcm(config: Config) -> Result<(Vec<String>, bool, f64), Box<dyn error::Error>> {
     // Parse config and runs with flag options
     let flags = config.flags.clone();
-    let flags_length = flags.clone().len();
+    let flags_length = flags.len();
     let mut recursive = false;
     let mut watch_delay: f64 = 0.0;
     let default_watch_delay: f64 = 1.0;
     let mut camel_case_flag: bool = false;
     let re = Regex::new(r"[0-9]").unwrap();
 
-    let mut i = 0;
-    for flag in flags.clone() {
+    for (i, flag) in flags.clone().into_iter().enumerate() {
         if flag == "-r" {
             print!("[Recursive]\t");
             recursive = true;
@@ -67,25 +63,22 @@ pub fn run_ztcm(config: Config) -> Result<(Vec<String>, bool, f64), Box<dyn erro
             print!("[Watching - ");
             watch_delay = default_watch_delay;
             // If a delay number is provided set to watch_delay
-            if i + 1 < flags_length {
-                if re.is_match(flags[i + 1].as_str()) {
-                    watch_delay = flags[i + 1].parse().unwrap();
-                }
+            if i + 1 < flags_length && re.is_match(flags[i + 1].as_str()) {
+                watch_delay = flags[i + 1].parse().unwrap();
             }
             println!("Updates every {} s]", watch_delay);
         }
-        i += 1;
     }
 
     if recursive {
         Ok((
-            get_files_recursive(config.query.clone()),
+            get_files_recursive(config.query),
             camel_case_flag,
             watch_delay,
         ))
     } else {
         Ok((
-            get_files(config.query.clone()).unwrap(),
+            get_files(config.query).unwrap(),
             camel_case_flag,
             watch_delay,
         ))

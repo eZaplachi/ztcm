@@ -35,7 +35,7 @@ impl ParseRes {
 
                     load_state += 1;
                     print!("\r[{}]", _load_char);
-                    io::stdout().flush().ok().expect("Could not flush stdout");
+                    io::stdout().flush().expect("Could not flush stdout");
                 }
                 i += 1;
             }
@@ -60,15 +60,13 @@ fn find_declarations(text: &str) -> Vec<&str> {
     RE.find_iter(text).map(|mat| mat.as_str()).collect()
 }
 
-fn car_cdr(s: &str) -> (&str, &str) {
+fn split_first_char(s: &str) -> (&str, &str) {
     for i in 1..5 {
         let r = s.get(0..i);
-        match r {
-            Some(x) => return (x, &s[i..]),
-            None => (),
+        if let Some(x) = r {
+            return (x, &s[i..]);
         }
     }
-
     (&s[0..0], s)
 }
 
@@ -79,24 +77,21 @@ fn format_fist_letter(first_char: &str, remainder: &str) -> String {
 
     if RE.is_match(first_char) {
         let formatted_first_char_upper = &first_char.to_uppercase();
-        return formatted_first_char_upper.to_string() + &remainder;
+        formatted_first_char_upper.to_string() + remainder
     } else {
-        let (intermediate_first_char, intermediate_remainder) = car_cdr(&remainder);
+        let (intermediate_first_char, intermediate_remainder) = split_first_char(remainder);
         let formatted_first_char_lower = &intermediate_first_char.to_lowercase();
-        return formatted_first_char_lower.to_string() + &intermediate_remainder;
+        formatted_first_char_lower.to_string() + intermediate_remainder
     }
 }
 
 fn remove_modifiers(text: &str) -> &str {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"\:").unwrap();
-    }
     let mut __parsed_name = Vec::new();
-    if RE.is_match(&text) {
-        __parsed_name = RE.split(&text).collect();
-        return __parsed_name[0];
+    if text.contains(':') {
+        __parsed_name = text.split(':').collect();
+        __parsed_name[0]
     } else {
-        return text;
+        text
     }
 }
 
@@ -104,12 +99,12 @@ fn camel_case_converter(text: &str) -> String {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"-").unwrap();
     }
-    let out: Vec<&str> = RE.split(&text).collect();
+    let out: Vec<&str> = RE.split(text).collect();
     let mut names: Vec<String> = Vec::new();
     for word in out {
         // println!("Word: {:?}", word);
         let parsed_name = remove_modifiers(word);
-        let (first_char, remainder) = car_cdr(parsed_name);
+        let (first_char, remainder) = split_first_char(parsed_name);
         // println!("first char: {}\nremainder: {}", first_char, remainder);
         let name_indiv: String = format_fist_letter(first_char, remainder);
         names.push(name_indiv);
@@ -119,7 +114,7 @@ fn camel_case_converter(text: &str) -> String {
     for name in names {
         parsed_name = parsed_name + &name
     }
-    return parsed_name;
+    parsed_name
     // let split_names = text.split("-");
 }
 
@@ -238,7 +233,7 @@ mod tests {
 
     #[test]
     fn split_string() {
-        let (first_char, remainder) = car_cdr("test");
+        let (first_char, remainder) = split_first_char("test");
         assert_eq!(first_char, "t");
         assert_eq!(remainder, "est")
     }
