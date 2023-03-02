@@ -1,121 +1,9 @@
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::io::prelude::*;
-use std::{fs, io, path, thread, time};
-
-pub struct ParseRes {}
-impl ParseRes {
-    pub fn parse_and_print_out(path_names: Vec<String>, camel_case_flag: bool, watch_delay: f64) {
-        for path in path_names.clone() {
-            println!("\nFound: {}", path);
-        }
-        if watch_delay != 0.0 {
-            let delay = time::Duration::from_secs_f64(watch_delay);
-            let mut load_state = 0;
-            let mut _load_char = "";
-            let mut i = 0;
-            loop {
-                parse_files(&path_names, camel_case_flag);
-
-                thread::sleep(delay);
-
-                // Loading icon logic
-                if i > 3 {
-                    i = 0;
-                    if load_state == 3 {
-                        load_state = 0;
-                    }
-                    _load_char = match load_state {
-                        0 => "/",
-                        1 => "-",
-                        2 => "\\",
-                        3 => "|",
-                        _ => "*",
-                    };
-
-                    load_state += 1;
-                    print!("\r[{}]", _load_char);
-                    io::stdout().flush().expect("Could not flush stdout");
-                }
-                i += 1;
-            }
-        } else {
-            parse_files(&path_names, camel_case_flag);
-        }
-    }
-}
-
-// Regex functions
-fn find_classes_or_ids(text: &str) -> Vec<&str> {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"(?m)^[\.\#]\S*").unwrap();
-    }
-    RE.find_iter(text).map(|mat| mat.as_str()).collect()
-}
-
-fn find_declarations(text: &str) -> Vec<&str> {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"readonly '\S*': \w*").unwrap();
-    }
-    RE.find_iter(text).map(|mat| mat.as_str()).collect()
-}
-
-fn split_first_char(s: &str) -> (&str, &str) {
-    for i in 1..5 {
-        let r = s.get(0..i);
-        if let Some(x) = r {
-            return (x, &s[i..]);
-        }
-    }
-    (&s[0..0], s)
-}
-
-fn format_fist_letter(first_char: &str, remainder: &str) -> String {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"^\w").unwrap();
-    }
-
-    if RE.is_match(first_char) {
-        let formatted_first_char_upper = &first_char.to_uppercase();
-        formatted_first_char_upper.to_string() + remainder
-    } else {
-        let (intermediate_first_char, intermediate_remainder) = split_first_char(remainder);
-        let formatted_first_char_lower = &intermediate_first_char.to_lowercase();
-        formatted_first_char_lower.to_string() + intermediate_remainder
-    }
-}
-
-fn remove_modifiers(text: &str) -> &str {
-    let mut __parsed_name = Vec::new();
-    if text.contains(':') {
-        __parsed_name = text.split(':').collect();
-        __parsed_name[0]
-    } else {
-        text
-    }
-}
-
-fn camel_case_converter(text: &str) -> String {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"-").unwrap();
-    }
-    let out: Vec<&str> = RE.split(text).collect();
-    let mut names: Vec<String> = Vec::new();
-    for word in out {
-        let parsed_name = remove_modifiers(word);
-        let (first_char, remainder) = split_first_char(parsed_name);
-        let name_indiv: String = format_fist_letter(first_char, remainder);
-        names.push(name_indiv);
-    }
-    let mut parsed_name = String::new();
-    for name in names {
-        parsed_name = parsed_name + &name
-    }
-    parsed_name
-}
+use std::{fs, path};
 
 // Logic function
-fn parse_files(path_names: &[String], camel_case_flag: bool) {
+pub fn parse_and_print(path_names: &[String], camel_case_flag: bool) {
     for path in path_names {
         let (data_vec, outfile_name) = get_file_data(path, camel_case_flag);
         print_files(data_vec, outfile_name);
@@ -185,6 +73,76 @@ fn print_files(data_vec: Vec<String>, outfile_name: String) {
     }
 }
 
+// Regex functions
+fn find_classes_or_ids(text: &str) -> Vec<&str> {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"(?m)^[\.\#]\S*").unwrap();
+    }
+    RE.find_iter(text).map(|mat| mat.as_str()).collect()
+}
+
+fn find_declarations(text: &str) -> Vec<&str> {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"readonly '\S*': \w*").unwrap();
+    }
+    RE.find_iter(text).map(|mat| mat.as_str()).collect()
+}
+
+fn split_first_char(s: &str) -> (&str, &str) {
+    for i in 1..5 {
+        let r = s.get(0..i);
+        if let Some(x) = r {
+            return (x, &s[i..]);
+        }
+    }
+    (&s[0..0], s)
+}
+
+fn format_fist_letter(first_char: &str, remainder: &str) -> String {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"^\w").unwrap();
+    }
+    if RE.is_match(first_char) {
+        let formatted_first_char_upper = &first_char.to_uppercase();
+        formatted_first_char_upper.to_string() + remainder
+    } else {
+        let (intermediate_first_char, intermediate_remainder) = split_first_char(remainder);
+        let formatted_first_char_lower = &intermediate_first_char.to_lowercase();
+        formatted_first_char_lower.to_string() + intermediate_remainder
+    }
+}
+
+fn remove_modifiers(text: &str) -> &str {
+    let mut __parsed_name = Vec::new();
+    if text.contains(':') {
+        __parsed_name = text.split(':').collect();
+        __parsed_name[0]
+    } else {
+        text
+    }
+}
+
+fn camel_case_converter(text: &str) -> String {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"-").unwrap();
+    }
+    let out: Vec<&str> = RE.split(text).collect();
+    let mut names: Vec<String> = Vec::new();
+    for word in out {
+        let parsed_name = remove_modifiers(word);
+        let (first_char, remainder) = split_first_char(parsed_name);
+        let name_indiv: String = format_fist_letter(first_char, remainder);
+        names.push(name_indiv);
+    }
+    let mut parsed_name = String::new();
+    for name in names {
+        parsed_name = parsed_name + &name
+    }
+    parsed_name
+}
+
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -205,12 +163,12 @@ mod tests {
     }
 
     #[test]
-    fn parse_f() {
+    fn parse_and_print_files() {
         let paths_expected = (
             "./test/test.module.css",
             "./test/recursive_test/test_r.module.css",
         );
-        parse_files(
+        parse_and_print(
             &[paths_expected.0.to_string(), paths_expected.1.to_string()],
             false,
         );
