@@ -1,0 +1,7 @@
+.test-class {
+    color: black;
+}
+
+#test-Id {
+    color: black;
+}

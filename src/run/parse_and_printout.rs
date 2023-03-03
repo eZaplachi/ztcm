@@ -1,39 +1,59 @@
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::{fs, path};
+use std::{fs::{self, create_dir_all}, path::Path};
 
-// Logic function
-pub fn parse_and_print(path_names: &[String], camel_case_flag: bool) {
+pub struct ModFlags<'c> {
+    pub camel_case_flag: bool,
+    pub kebab_case_flag: bool,
+    pub out_dir: &'c String,
+}
+
+pub fn parse_and_print(path_names: &[String], mod_flags: ModFlags) {
     for path in path_names {
-        let (data_vec, outfile_name) = get_file_data(path, camel_case_flag);
+        let (data_vec, outfile_name) = get_file_data(path, &mod_flags);
         print_files(data_vec, outfile_name);
     }
 }
 
-// Helper logic functions
-fn get_file_data(path: &String, camel_case_flag: bool) -> (Vec<String>, String) {
-    let outfile_path = format!("{}.d.ts", path);
+fn get_file_data(path: &String, mod_flags: &ModFlags) -> (Vec<String>, String) {
+    let mut __outfile_name = String::new();
+    if !mod_flags.out_dir.is_empty() {
+        if !Path::new(mod_flags.out_dir).exists() {
+            create_dir_all(mod_flags.out_dir).expect("Couldn't create output directory");
+        }
+        let mod_path = mod_flags.out_dir.to_owned() + "/" + path.split('/').last().expect("Error parsing file name");
+        __outfile_name = format!("{}.d.ts", mod_path);
+    } else {
+        __outfile_name = format!("{}.d.ts", path);
+    }
     let contents = fs::read_to_string(path).expect("Something went wrong reading the .css file");
     let mut out_names = Vec::new();
-    let re = Regex::new(r"[\.\#]").unwrap();
     let mut __out_name = String::new();
     let names = find_classes_or_ids(&contents);
     for name in names {
-        if camel_case_flag {
-            let camel_name = camel_case_converter(name);
-            __out_name = format!("readonly '{}': string;", camel_name);
+        let parsed_name = remove_modifiers(name);
+        if mod_flags.camel_case_flag {
+            let camel_name = camel_case_converter(&parsed_name);
+            __out_name = format_line(camel_name);
+            out_names.push(__out_name)
+        } else if mod_flags.kebab_case_flag {
+            let kebab_name = kebab_case_converter(&parsed_name);
+            __out_name = format_line(kebab_name);
             out_names.push(__out_name)
         } else {
-            let parsed_name = re.replace_all(name, "");
-            __out_name = format!("readonly '{}': string;", parsed_name);
+            __out_name = format_line(parsed_name.to_string());
             out_names.push(__out_name)
         }
     }
-    (out_names, outfile_path)
+    (out_names, __outfile_name)
+}
+
+fn format_line(name: String) -> String {
+    format!("readonly '{}': string;", name)
 }
 
 fn print_files(data_vec: Vec<String>, outfile_name: String) {
-    let path_exists = path::Path::new(&outfile_name).exists();
+    let path_exists = Path::new(&outfile_name).exists();
     let mut _outfile_data = String::new();
     let mut outfile_vec_set = Vec::new();
     let mut matching_value = false;
@@ -73,7 +93,6 @@ fn print_files(data_vec: Vec<String>, outfile_name: String) {
     }
 }
 
-// Regex functions
 fn find_classes_or_ids(text: &str) -> Vec<&str> {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"(?m)^[\.\#]\S*").unwrap();
@@ -88,6 +107,46 @@ fn find_declarations(text: &str) -> Vec<&str> {
     RE.find_iter(text).map(|mat| mat.as_str()).collect()
 }
 
+fn remove_modifiers(text: &str) -> String {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"[\.\#]").unwrap();
+    }
+    let mut __san_name = Vec::new();
+    if text.contains(':') {
+        __san_name = text.split(':').collect();
+        RE.replace_all(__san_name[0], "").to_string()
+    } else {
+        RE.replace_all(text, "").to_string()
+    }
+}
+
+fn camel_case_converter(text: &str) -> String {
+    let out: Vec<&str> = text.split('-').collect();
+    let mut parsed_name = String::new();
+    for (i, word) in out.into_iter().enumerate() {
+        let mut __name_indiv = String::new();
+        let (first_char, remainder) = split_first_char(word);
+        if i == 0 {
+            __name_indiv = first_char.to_lowercase() + &remainder.to_lowercase();
+        } else {
+            __name_indiv = first_char.to_uppercase() + &remainder.to_lowercase();
+        }
+        parsed_name = parsed_name + &__name_indiv;
+    }
+    parsed_name
+}
+
+fn kebab_case_converter(text: &str) -> String {
+    // find lowcase/titlecase followed by uppercase/titlecase/numbers Or numbers followed by lowercase letter
+    // replace with value of capture groups
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"(?x)([\p{Ll}\p{Lt}])([\p{Lu}\p{Lt}\p{Nd}\p{Nl}\p{No}]) | ([\p{Nd}\p{Nl}\p{No}])(\p{Ll})").unwrap();
+    }
+    RE.replace_all(text, "${1}${3}-${2}${4}")
+        .to_string()
+        .to_lowercase()
+}
+
 fn split_first_char(s: &str) -> (&str, &str) {
     for i in 1..5 {
         let r = s.get(0..i);
@@ -97,51 +156,6 @@ fn split_first_char(s: &str) -> (&str, &str) {
     }
     (&s[0..0], s)
 }
-
-fn format_fist_letter(first_char: &str, remainder: &str) -> String {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"^\w").unwrap();
-    }
-    if RE.is_match(first_char) {
-        let formatted_first_char_upper = &first_char.to_uppercase();
-        formatted_first_char_upper.to_string() + remainder
-    } else {
-        let (intermediate_first_char, intermediate_remainder) = split_first_char(remainder);
-        let formatted_first_char_lower = &intermediate_first_char.to_lowercase();
-        formatted_first_char_lower.to_string() + intermediate_remainder
-    }
-}
-
-fn remove_modifiers(text: &str) -> &str {
-    let mut __parsed_name = Vec::new();
-    if text.contains(':') {
-        __parsed_name = text.split(':').collect();
-        __parsed_name[0]
-    } else {
-        text
-    }
-}
-
-fn camel_case_converter(text: &str) -> String {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"-").unwrap();
-    }
-    let out: Vec<&str> = RE.split(text).collect();
-    let mut names: Vec<String> = Vec::new();
-    for word in out {
-        let parsed_name = remove_modifiers(word);
-        let (first_char, remainder) = split_first_char(parsed_name);
-        let name_indiv: String = format_fist_letter(first_char, remainder);
-        names.push(name_indiv);
-    }
-    let mut parsed_name = String::new();
-    for name in names {
-        parsed_name = parsed_name + &name
-    }
-    parsed_name
-}
-
-
 
 #[cfg(test)]
 mod tests {
@@ -170,11 +184,15 @@ mod tests {
         );
         parse_and_print(
             &[paths_expected.0.to_string(), paths_expected.1.to_string()],
-            false,
+            ModFlags {
+                camel_case_flag: false,
+                kebab_case_flag: false,
+                out_dir: &String::new(),
+            },
         );
         let path_exists = (
-            path::Path::new(paths_expected.0).exists(),
-            path::Path::new(paths_expected.1).exists(),
+            Path::new(paths_expected.0).exists(),
+            Path::new(paths_expected.1).exists(),
         );
         assert_eq!(path_exists, (true, true))
     }
@@ -188,22 +206,20 @@ mod tests {
 
     #[test]
     fn remove_mods() {
-        let parsed_name = remove_modifiers("test:modifiers");
+        let parsed_name = remove_modifiers("#test:modifiers");
         assert_eq!(parsed_name, "test")
     }
 
     #[test]
-    fn format_cc() {
-        let first_word = format_fist_letter(".", "Test");
-        let subsequent_word = format_fist_letter("t", "est");
-        assert_eq!(first_word, "test");
-        assert_eq!(subsequent_word, "Test")
+    fn camel_case() {
+        let name = camel_case_converter("Hello-world");
+        assert_eq!(name, "helloWorld");
     }
 
     #[test]
-    fn camel_case() {
-        let name = camel_case_converter(".Hello-world:modifiers");
-        assert_eq!(name, "helloWorld");
+    fn kebab_case() {
+        let name = kebab_case_converter("helloWorldTest");
+        assert_eq!(name, "hello-world-test");
     }
 
     #[test]
@@ -215,7 +231,14 @@ mod tests {
             ],
             "./test/test.module.css.d.ts".to_string(),
         );
-        let file_data = get_file_data(&"./test/test.module.css".to_string(), false);
+        let file_data = get_file_data(
+            &"./test/test.module.css".to_string(),
+            &ModFlags {
+                camel_case_flag: false,
+                kebab_case_flag: false,
+                out_dir: &String::new(),
+            },
+        );
         assert_eq!(file_data, file_data_expected)
     }
 
@@ -230,7 +253,11 @@ mod tests {
         );
         let file_data = get_file_data(
             &"./test/recursive_test/test_r.module.css".to_string(),
-            false,
+            &ModFlags {
+                camel_case_flag: false,
+                kebab_case_flag: false,
+                out_dir: &String::new(),
+            },
         );
         assert_eq!(file_data, file_data_expected)
     }
