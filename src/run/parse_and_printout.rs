@@ -37,17 +37,19 @@ fn get_file_data(path: &String, mod_flags: &ModFlags) -> (Vec<String>, String) {
     let names = find_classes_or_ids(&contents);
     for name in names {
         let parsed_name = remove_modifiers(name);
-        if mod_flags.camel_case_flag {
-            let camel_name = camel_case_converter(&parsed_name);
-            __out_name = format_line(camel_name);
-            out_names.push(__out_name)
-        } else if mod_flags.kebab_case_flag {
-            let kebab_name = kebab_case_converter(&parsed_name);
-            __out_name = format_line(kebab_name);
-            out_names.push(__out_name)
-        } else {
-            __out_name = format_line(parsed_name.to_string());
-            out_names.push(__out_name)
+        if !check_reserved(parsed_name.to_string()) {
+            if mod_flags.camel_case_flag {
+                let camel_name = camel_case_converter(&parsed_name);
+                __out_name = format_line(camel_name);
+                out_names.push(__out_name)
+            } else if mod_flags.kebab_case_flag {
+                let kebab_name = kebab_case_converter(&parsed_name);
+                __out_name = format_line(kebab_name);
+                out_names.push(__out_name)
+            } else {
+                __out_name = format_line(parsed_name.to_string());
+                out_names.push(__out_name)
+            }
         }
     }
     (out_names, __outfile_name)
@@ -100,7 +102,7 @@ fn print_files(data_vec: Vec<String>, outfile_name: String) {
 
 fn find_classes_or_ids(text: &str) -> Vec<&str> {
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"(?m)^[\.\#]\S*").unwrap();
+        static ref RE: Regex = Regex::new(r"(?m)^[\.\#]\S*|^@value\s\S*").unwrap();
     }
     RE.find_iter(text).map(|mat| mat.as_str()).collect()
 }
@@ -114,7 +116,7 @@ fn find_declarations(text: &str) -> Vec<&str> {
 
 fn remove_modifiers(text: &str) -> String {
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"[\.\#]").unwrap();
+        static ref RE: Regex = Regex::new(r"[\.\#]|@value\s").unwrap();
     }
     let mut __san_name = Vec::new();
     if text.contains(':') {
@@ -122,6 +124,16 @@ fn remove_modifiers(text: &str) -> String {
         RE.replace_all(__san_name[0], "").to_string()
     } else {
         RE.replace_all(text, "").to_string()
+    }
+}
+
+fn check_reserved(word: String) -> bool {
+    let res_string = fs::read_to_string("src/run/reserved_words_ts.txt")
+        .expect("Error - Couldn't read reserved words file");
+    if res_string.contains(&word) {
+        true
+    } else {
+        false
     }
 }
 
@@ -145,7 +157,7 @@ fn kebab_case_converter(text: &str) -> String {
     // find lowcase/titlecase followed by uppercase/titlecase/numbers Or numbers followed by lowercase letter
     // replace with value of capture groups
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"(?x)([\p{Ll}\p{Lt}])([\p{Lu}\p{Lt}\p{Nd}\p{Nl}\p{No}]) | ([\p{Nd}\p{Nl}\p{No}])(\p{Ll})").unwrap();
+        static ref RE: Regex = Regex::new(r"(?x)([\p{Ll}\p{Lt}])([\p{Lu}\p{Lt}\p{Nd}\p{Nl}\p{No}])|([\p{Nd}\p{Nl}\p{No}])(\p{Ll})").unwrap();
     }
     RE.replace_all(text, "${1}${3}-${2}${4}")
         .to_string()
@@ -168,8 +180,8 @@ mod tests {
 
     #[test]
     fn find_c_or_id() {
-        let class_or_id = find_classes_or_ids(".testClass \n#testId");
-        let class_or_id_expected = [".testClass", "#testId"];
+        let class_or_id = find_classes_or_ids(".testClass \n#testId \n@value test");
+        let class_or_id_expected = [".testClass", "#testId", "@value test"];
         assert_eq!(class_or_id, class_or_id_expected)
     }
 
@@ -195,7 +207,10 @@ mod tests {
                 out_dir: &String::new(),
             },
         );
-        let outputs_expected: Vec<String> = paths_expected.into_iter().map(|path| path.to_owned() + ".d.ts").collect();
+        let outputs_expected: Vec<String> = paths_expected
+            .into_iter()
+            .map(|path| path.to_owned() + ".d.ts")
+            .collect();
         let path_exists = (
             Path::new(&outputs_expected[0]).exists(),
             Path::new(&outputs_expected[1]).exists(),
@@ -205,7 +220,10 @@ mod tests {
 
     #[test]
     fn parse_and_print_outdir() {
-        let paths_expected = ["./test/test.module.css", "./test/test_outdir/test.module.css.d.ts"];
+        let paths_expected = [
+            "./test/test.module.css",
+            "./test/test_outdir/test.module.css.d.ts",
+        ];
         parse_and_print(
             &[paths_expected[0].to_string()],
             ModFlags {
@@ -226,8 +244,16 @@ mod tests {
 
     #[test]
     fn remove_mods() {
-        let parsed_name = remove_modifiers("#test:modifiers");
-        assert_eq!(parsed_name, "test")
+        let parsed_id = remove_modifiers("#test:modifiers");
+        let parsed_val = remove_modifiers("@value test");
+        assert_eq!((parsed_id, parsed_val), ("test".to_string(), "test".to_string()))
+    }
+
+    #[test]
+    fn check_res() {
+        let res_true = check_reserved("any".to_string());
+        let res_false = check_reserved("test".to_string());
+        assert_eq!((res_true, res_false), (true, false))
     }
 
     #[test]
