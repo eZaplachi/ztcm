@@ -1,6 +1,9 @@
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::{fs::{self, create_dir_all}, path::Path};
+use std::{
+    fs::{self, create_dir_all},
+    path::Path,
+};
 
 pub struct ModFlags<'c> {
     pub camel_case_flag: bool,
@@ -21,7 +24,9 @@ fn get_file_data(path: &String, mod_flags: &ModFlags) -> (Vec<String>, String) {
         if !Path::new(mod_flags.out_dir).exists() {
             create_dir_all(mod_flags.out_dir).expect("Couldn't create output directory");
         }
-        let mod_path = mod_flags.out_dir.to_owned() + "/" + path.split('/').last().expect("Error parsing file name");
+        let mod_path = mod_flags.out_dir.to_owned()
+            + "/"
+            + path.split('/').last().expect("Error parsing file name");
         __outfile_name = format!("{}.d.ts", mod_path);
     } else {
         __outfile_name = format!("{}.d.ts", path);
@@ -178,23 +183,38 @@ mod tests {
 
     #[test]
     fn parse_and_print_files() {
-        let paths_expected = (
+        let paths_expected = [
             "./test/test.module.css",
             "./test/recursive_test/test_r.module.css",
-        );
+        ];
         parse_and_print(
-            &[paths_expected.0.to_string(), paths_expected.1.to_string()],
+            &[paths_expected[0].to_string(), paths_expected[1].to_string()],
             ModFlags {
                 camel_case_flag: false,
                 kebab_case_flag: false,
                 out_dir: &String::new(),
             },
         );
+        let outputs_expected: Vec<String> = paths_expected.into_iter().map(|path| path.to_owned() + ".d.ts").collect();
         let path_exists = (
-            Path::new(paths_expected.0).exists(),
-            Path::new(paths_expected.1).exists(),
+            Path::new(&outputs_expected[0]).exists(),
+            Path::new(&outputs_expected[1]).exists(),
         );
         assert_eq!(path_exists, (true, true))
+    }
+
+    #[test]
+    fn parse_and_print_outdir() {
+        let paths_expected = ["./test/test.module.css", "./test/test_outdir/test.module.css.d.ts"];
+        parse_and_print(
+            &[paths_expected[0].to_string()],
+            ModFlags {
+                camel_case_flag: false,
+                kebab_case_flag: false,
+                out_dir: &"./test/test_outdir".to_string(),
+            },
+        );
+        assert_eq!(Path::new(paths_expected[1]).exists(), true)
     }
 
     #[test]

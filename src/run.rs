@@ -77,7 +77,6 @@ fn parse_and_print_out(data: RunData, initial_args: &[String]) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::Path;
 
     #[test]
     fn new_args() {
@@ -196,19 +195,5 @@ mod tests {
         }
 
         assert_eq!(test_output_found, (true, true, true))
-    }
-
-    #[test]
-    fn data_outfolder() {
-        let binding = [
-            "ztcm".to_string(),
-            "test".to_string(),
-            "-o".to_string(),
-            "test/testOut".to_string(),
-        ];
-        let config: Config = Config::new_args(&binding).unwrap();
-        let _data_res = RunData::find_files(config).unwrap();
-
-        assert_eq!(Path::new("test/testOut/test.module.css.d.ts").exists(), true)
     }
 }
