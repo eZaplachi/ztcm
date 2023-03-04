@@ -25,9 +25,9 @@ impl Config<'_> {
         }
         let mut path = String::new();
         let mut flags = Vec::new();
-        let help_message = "Usage: -h / -help: Show this help \n \n Run command:      ztcm [path('.' for cwd)] [flags] \n
+        let help_message = "Usage: '-h' / '-help': Show this help \n \n Run command:      ztcm [path('.' for cwd)] [flags] \n
         \n Flags: \n '-r': Recursively search through the selected folder \n '-w [*Cycle Delay (s)] [*Cycles/Refresh]': Watches for changes in file every cycle; *Optional - Defaults to [1s] [90cycles/refresh]
-        \n '-c': Converts class and id names from Kebab-Case to camelCase \n '-h': Converts from camelCase to Hyphen-Case";
+        \n '-c': Converts class and id names from kebab-case to camelCase \n '-k': Converts from camelCase to kebab-case";
 
         for arg in args {
             if arg.contains("-h") || arg.contains("-help") || arg.contains("--help") {
