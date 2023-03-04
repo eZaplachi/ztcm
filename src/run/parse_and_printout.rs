@@ -5,6 +5,7 @@ use std::{
     fs::{self, create_dir_all},
     path::Path,
 };
+mod text;
 
 pub struct ModFlags<'c> {
     pub camel_case_flag: bool,
@@ -134,9 +135,7 @@ fn remove_modifiers(text: &str) -> String {
 }
 
 fn check_reserved(word: String) -> bool {
-    let res_string = fs::read_to_string("src/run/reserved_words_ts.txt")
-        .expect("Error - Couldn't read reserved words file");
-    let res_vec = res_string.split('\n');
+    let res_vec = text::ts_reserved_words();
     for res in res_vec {
         if word == res {
             return true;
