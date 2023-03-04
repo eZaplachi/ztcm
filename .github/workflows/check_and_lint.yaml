@@ -1,8 +1,8 @@
 on:
   pull_request:
-  push:
     branches:
       - main
+      - dev
 
 
 name: Check and Lint
