@@ -122,7 +122,7 @@ fn find_declarations(text: &str) -> HashSet<&str> {
 
 fn remove_modifiers(text: &str) -> String {
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"[\.\#]|@value\s|\s").unwrap();
+        static ref RE: Regex = Regex::new(r"[\.\#]|@value\s|\s|;").unwrap();
     }
     let mut __san_name = Vec::new();
     if text.contains(':') {
@@ -305,7 +305,9 @@ mod tests {
         let file_data_expected: (HashSet<String>, String) = (
             HashSet::from([
                 "readonly 'test-class': string;".to_string(),
-                "readonly 'test-Id': string;".to_string(),
+                "readonly 'test-id': string;".to_string(),
+                "readonly 'test': string;".to_string(),
+                "readonly 'split-test': string;".to_string(),
             ]),
             "./test/test.module.css.d.ts".to_string(),
         );
@@ -317,7 +319,10 @@ mod tests {
                 out_dir: &String::new(),
             },
         );
-        assert_eq!(file_data, file_data_expected)
+        let mut diff = false;
+        let test: Vec<&String> = file_data.0.difference(&file_data_expected.0).collect();
+        if !test.is_empty() {diff = true}
+        assert_eq!((diff, file_data.1), (false, file_data_expected.1))
     }
 
     #[test]

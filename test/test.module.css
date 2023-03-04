@@ -2,6 +2,12 @@
     color: black;
 }
 
-#test-Id {
+#test-id {
     color: black;
+}
+
+@value test;
+
+.test-class, #test-id, .split-test {
+  clolor: black;
 }
