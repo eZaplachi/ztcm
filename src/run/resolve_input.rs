@@ -92,7 +92,7 @@ impl RunData {
                 if i + 1 < flags_length && re_word.is_match(flags[i + 1].as_str()) {
                     out_dir = flags[i + 1].to_string();
                 } else {
-                    return Err("No output directory specified")
+                    return Err("No output directory specified");
                 }
             }
         }

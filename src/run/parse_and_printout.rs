@@ -321,7 +321,9 @@ mod tests {
         );
         let mut diff = false;
         let test: Vec<&String> = file_data.0.difference(&file_data_expected.0).collect();
-        if !test.is_empty() {diff = true}
+        if !test.is_empty() {
+            diff = true
+        }
         assert_eq!((diff, file_data.1), (false, file_data_expected.1))
     }
 
