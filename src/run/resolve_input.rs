@@ -23,7 +23,6 @@ impl Config<'_> {
         } else if args.len() > 7 {
             return Err("too many arguments");
         }
-
         let mut path = String::new();
         let mut flags = Vec::new();
         let help_message = "Usage: -h / -help: Show this help \n \n Run command:      ztcm [path('.' for cwd)] [flags] \n
@@ -47,7 +46,6 @@ impl Config<'_> {
                 }
             }
         }
-
         Ok(Config { query: path, flags })
     }
 }
