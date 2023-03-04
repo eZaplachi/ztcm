@@ -51,11 +51,11 @@ You can run the program with the following command:
 ztcm [path('.' for cwd)] [flags]
 ```
 
-**Flags
+**Flags**
 
 - `-h` /  `-help` : Show this help 
 - `-r`: Recursively search through the selected folder
-- `-w` `[*Cycle Delay (s)]` `[*Cycles/Refresh]`: Watches for changes in file every cycle;  `*`*Optional - Defaults to (1s delay) (90cycles/refresh)
+- `-w` `[*Cycle Delay (s)]` `[*Cycles/Refresh]`: Watches for changes in file every cycle;  `*`*Optional* - Defaults to (1s delay) (90cycles/refresh)
 -  `-c`: Converts class and id names from kebab-case to camelCase
 - `-k`: Converts from camelCase to kebab-case
 
