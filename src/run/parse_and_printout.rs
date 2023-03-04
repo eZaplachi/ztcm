@@ -15,7 +15,9 @@ pub struct ModFlags<'c> {
 pub fn parse_and_print(path_names: &[String], mod_flags: ModFlags) {
     for path in path_names {
         let (data_vec, outfile_name) = get_file_data(path, &mod_flags);
-        print_files(data_vec, outfile_name);
+        if !outfile_name.contains("global") {
+            print_files(data_vec, outfile_name);
+        }
     }
 }
 
@@ -39,7 +41,7 @@ fn get_file_data(path: &String, mod_flags: &ModFlags) -> (HashSet<String>, Strin
     for name in names {
         let split_names = split_classes_ids(name);
         for split_name in split_names {
-            let parsed_name = remove_modifiers(name);
+            let parsed_name = remove_modifiers(split_name);
             if !check_reserved(parsed_name.to_string()) {
                 if mod_flags.camel_case_flag {
                     let camel_name = camel_case_converter(&parsed_name);
@@ -120,7 +122,7 @@ fn find_declarations(text: &str) -> HashSet<&str> {
 
 fn remove_modifiers(text: &str) -> String {
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"[\.\#]|@value\s").unwrap();
+        static ref RE: Regex = Regex::new(r"[\.\#]|@value\s|\s").unwrap();
     }
     let mut __san_name = Vec::new();
     if text.contains(':') {
@@ -131,12 +133,10 @@ fn remove_modifiers(text: &str) -> String {
     }
 }
 
-fn check_banned(name: String) {}
-
 fn check_reserved(word: String) -> bool {
     let res_string = fs::read_to_string("src/run/reserved_words_ts.txt")
         .expect("Error - Couldn't read reserved words file");
-    let res_vec = res_string.split("\n");
+    let res_vec = res_string.split('\n');
     for res in res_vec {
         if word == res {
             return true;
@@ -150,7 +150,7 @@ fn split_classes_ids(name: &str) -> Vec<&str> {
     lazy_static! {
         static ref RE: Regex = Regex::new(r",+?").unwrap();
     }
-    let parsed_name: Vec<&str> = RE.split(&name).collect();
+    let parsed_name: Vec<&str> = RE.split(name).collect();
     let mut out_name = Vec::new();
     if parsed_name.len() > 1 {
         for indiv_name in parsed_name {
@@ -159,7 +159,7 @@ fn split_classes_ids(name: &str) -> Vec<&str> {
     } else {
         out_name.push(name);
     }
-    return out_name;
+    out_name
 }
 
 fn camel_case_converter(text: &str) -> String {
@@ -217,7 +217,8 @@ mod tests {
     fn find_decls() {
         let declarations =
             find_declarations("readonly 'test': string;\n readonly 'test2': string;");
-        let declarations_expected = HashSet::from(["readonly 'test': string", "readonly 'test2': string"]);
+        let declarations_expected =
+            HashSet::from(["readonly 'test': string", "readonly 'test2': string"]);
         assert_eq!(declarations, declarations_expected)
     }
 
