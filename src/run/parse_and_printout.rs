@@ -74,10 +74,12 @@ fn print_files(data_set: HashSet<String>, outfile_name: String, thread_num: i32)
     let mut matching_value = false;
     let mut print_out = false;
     if !path_exists {
-        println!(
-            "\x1b[33;1mCreating\x1b[0m(T{}): {}",
-            thread_num, outfile_name
-        );
+        if !data_set.len() == 0 {
+            println!(
+                "\x1b[33;1mCreating\x1b[0m(T{}): {}",
+                thread_num, outfile_name
+            );
+        }
     } else {
         _outfile_data =
             fs::read_to_string(&outfile_name).expect("Something went wrong reading the .d.ts file");
@@ -301,12 +303,51 @@ mod tests {
             ModFlags {
                 camel_case_flag: false,
                 kebab_case_flag: false,
+                out_dir: &String::new(),
+            },
+            1,
+        );
+        assert_eq!(Path::new(paths_expected[1]).exists(), true)
+    }
+
+    #[should_panic]
+    #[test]
+    fn print_error_file() {
+        let paths_expected = [
+            "./test/error.module.css",
+            "./test/error.module.css.d.ts",
+        ];
+        parse_and_print(
+            &[paths_expected[0].to_string()],
+            ModFlags {
+                camel_case_flag: false,
+                kebab_case_flag: false,
+                out_dir: &String::new(),
+            },
+            1,
+        );
+        assert_eq!(Path::new(paths_expected[1]).exists(), true)
+    }
+
+    #[should_panic]
+    #[test]
+    fn print_empty_file() {
+        let paths_expected = [
+            "./test/empty.module.css",
+            "./test/empty.module.css.d.ts",
+        ];
+        parse_and_print(
+            &[paths_expected[0].to_string()],
+            ModFlags {
+                camel_case_flag: false,
+                kebab_case_flag: false,
                 out_dir: &"./test/test_outdir".to_string(),
             },
             1,
         );
         assert_eq!(Path::new(paths_expected[1]).exists(), true)
     }
+
 
     #[test]
     fn split_string() {

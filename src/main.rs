@@ -7,10 +7,3 @@ fn main() {
     run_ztcm(&args)
 }
 
-#[cfg(tests)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn
-}
