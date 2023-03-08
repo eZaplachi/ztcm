@@ -10,7 +10,6 @@ pub struct Config<'a> {
 pub struct RunData {
     pub paths: Vec<String>,
     pub cc_flag: bool,
-    pub kc_flag: bool,
     pub out_dir: String,
     pub watch_delay: f64,
     pub cycles_per_refresh: i32,
@@ -52,7 +51,6 @@ impl Config<'_> {
                     \n '-r': Recursively search through the selected folder 
                     \n '-w [*Cycle Delay (s)] [*Cycles/Refresh]': Watches for changes in file every cycle; *Optional - Defaults to [{}s] [Every {}cycles/refresh]
                     \n '-c': Converts class and id names from kebab-case to camelCase for .d.ts files
-                    \n '-k': Converts from camelCase to kebab-case
                     \n '-o [Out-dir]'': Changes output directory
                     \n '-p [Pattern]': Choose pattern to search - Defaults to [{}]
                     \n '-m [Threads]': Enable multi-threaded mode - Defaults to [{} threads]", defaults.delay, defaults.re_index, defaults.pattern, defaults.threads);
@@ -89,7 +87,6 @@ impl RunData {
         let mut cycles_per_refresh: i32 = 0;
         let mut threads: i32 = 1;
         let mut camel_case_flag: bool = false;
-        let mut kebab_case_flag: bool = false;
         let mut out_dir: String = String::new();
         let mut pattern: String = config.defaults.pattern;
         let re_num = Regex::new(r"[0-9]").unwrap();
@@ -103,12 +100,8 @@ impl RunData {
                     recursive = true;
                 }
                 "-c" => {
-                    print!("[kebab-case --> camelCase.d.ts]{}", custom_tab);
+                    print!("[kebab-case --> camelCase .d.ts]{}", custom_tab);
                     camel_case_flag = true;
-                }
-                "-k" => {
-                    print!("[camelCase --> kebab-case]{}", custom_tab);
-                    kebab_case_flag = true;
                 }
                 "-o" => {
                     if i + 1 < flags_length && re_word.is_match(flags[i + 1].as_str()) {
@@ -161,14 +154,10 @@ impl RunData {
                 _ => {}
             }
         }
-        if camel_case_flag && kebab_case_flag {
-            panic!("Can't have both the Camel and Kebab case flags called at once")
-        }
         if recursive {
             Ok(RunData {
                 paths: get_files_recursive(config.query, pattern),
                 cc_flag: camel_case_flag,
-                kc_flag: kebab_case_flag,
                 out_dir,
                 watch_delay,
                 cycles_per_refresh,
@@ -178,7 +167,6 @@ impl RunData {
             Ok(RunData {
                 paths: get_files(config.query, pattern),
                 cc_flag: camel_case_flag,
-                kc_flag: kebab_case_flag,
                 out_dir,
                 watch_delay,
                 cycles_per_refresh,
@@ -219,17 +207,6 @@ fn get_files_recursive(directory: String, pattern: String) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    #[should_panic]
-    fn camel_kebab_case() {
-        let defaults: Defaults = get_defaults();
-        let _res = RunData::find_files(Config {
-            query: "./test".to_string(),
-            flags: vec![&"-c".to_string(), &"-k".to_string()],
-            defaults,
-        });
-    }
 
     #[test]
     fn get_file() {

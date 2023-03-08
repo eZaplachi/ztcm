@@ -9,7 +9,6 @@ mod text;
 
 pub struct ModFlags<'c> {
     pub camel_case_flag: bool,
-    pub kebab_case_flag: bool,
     pub out_dir: &'c String,
 }
 
@@ -48,10 +47,6 @@ fn get_file_data(path: &String, mod_flags: &ModFlags) -> (HashSet<String>, Strin
                 if mod_flags.camel_case_flag {
                     let camel_name = camel_case_converter(&parsed_name);
                     __out_name = format_line(camel_name);
-                    out_names.insert(__out_name);
-                } else if mod_flags.kebab_case_flag {
-                    let kebab_name = kebab_case_converter(&parsed_name);
-                    __out_name = format_line(kebab_name);
                     out_names.insert(__out_name);
                 } else {
                     __out_name = format_line(parsed_name.to_string());
@@ -221,20 +216,6 @@ fn camel_case_converter(text: &str) -> String {
     parsed_name
 }
 
-fn kebab_case_converter(text: &str) -> String {
-    // find lowcase/titlecase followed by uppercase/titlecase/numbers Or numbers followed by lowercase letter
-    // replace with value of capture groups
-    lazy_static! {
-        static ref RE: Regex = Regex::new(
-            r"(?x)([\p{Ll}\p{Lt}])([\p{Lu}\p{Lt}\p{Nd}\p{Nl}\p{No}])|([\p{Nd}\p{Nl}\p{No}])(\p{Ll})"
-        )
-        .unwrap();
-    }
-    RE.replace_all(text, "${1}${3}-${2}${4}")
-        .to_string()
-        .to_lowercase()
-}
-
 fn split_first_char(s: &str) -> (&str, &str) {
     for i in 1..5 {
         let r = s.get(0..i);
@@ -276,7 +257,6 @@ mod tests {
             &[paths_expected[0].to_string(), paths_expected[1].to_string()],
             ModFlags {
                 camel_case_flag: false,
-                kebab_case_flag: false,
                 out_dir: &String::new(),
             },
             1,
@@ -302,8 +282,7 @@ mod tests {
             &[paths_expected[0].to_string()],
             ModFlags {
                 camel_case_flag: false,
-                kebab_case_flag: false,
-                out_dir: &String::new(),
+                out_dir: &"test/test_outdir".to_string(),
             },
             1,
         );
@@ -318,7 +297,6 @@ mod tests {
             &[paths_expected[0].to_string()],
             ModFlags {
                 camel_case_flag: false,
-                kebab_case_flag: false,
                 out_dir: &String::new(),
             },
             1,
@@ -334,7 +312,6 @@ mod tests {
             &[paths_expected[0].to_string()],
             ModFlags {
                 camel_case_flag: false,
-                kebab_case_flag: false,
                 out_dir: &"./test/test_outdir".to_string(),
             },
             1,
@@ -380,12 +357,6 @@ mod tests {
     }
 
     #[test]
-    fn kebab_case() {
-        let name = kebab_case_converter("helloWorldTest");
-        assert_eq!(name, "hello-world-test");
-    }
-
-    #[test]
     fn get_f_data() {
         let file_data_expected: (HashSet<String>, String) = (
             HashSet::from([
@@ -400,7 +371,6 @@ mod tests {
             &"./test/test.module.css".to_string(),
             &ModFlags {
                 camel_case_flag: false,
-                kebab_case_flag: false,
                 out_dir: &String::new(),
             },
         );
@@ -425,7 +395,6 @@ mod tests {
             &"./test/recursive_test/test_r.module.css".to_string(),
             &ModFlags {
                 camel_case_flag: false,
-                kebab_case_flag: false,
                 out_dir: &String::new(),
             },
         );

@@ -66,7 +66,6 @@ ztcm [path('.' for cwd)] [flags]
 - `-m [*Threads]`: Enable multithreaded mode;   `*`*Optional* - Defaults to (2 threads)
 - `-w` `[*Cycle Delay (s)]` `[*Cycles/Refresh]`: Watches for changes in file every cycle;  `*`*Optional* - Defaults to (1s delay) (90cycles/refresh)
 -  `-c`: Converts class and id names from kebab-case to camelCase in .d.ts file
-- `-k`: Converts from camelCase to kebab-case
 
 
 *This project was intended for learning purposes - not serious use
