@@ -274,6 +274,7 @@ mod tests {
 
     #[test]
     fn parse_and_print_outdir() {
+        create_dir_all("test/test_outdir").expect("Couldn't create test_outdir directory");
         let paths_expected = [
             "./test/test.module.css",
             "./test/test_outdir/test.module.css.d.ts",

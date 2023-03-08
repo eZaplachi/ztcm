@@ -2,7 +2,6 @@
 *.css
 *.ts
 *.d.ts
-!test/test_outdir/
 !test.module.*css
 !empty.module.css
 !error.module.css
