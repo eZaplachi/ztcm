@@ -90,10 +90,7 @@ fn p_and_p(data: &RunData) {
             if end_index > num_of_paths as f32 {
                 end_index = num_of_paths as f32;
             }
-            let paths_part: Vec<_> = data.paths[start_index as usize..end_index as usize]
-                .iter()
-                .cloned()
-                .collect();
+            let paths_part: Vec<_> = data.paths[start_index as usize..end_index as usize].to_vec();
             let handle = s.spawn(move || {
                 parse_and_print(
                     &paths_part,
