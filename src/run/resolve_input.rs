@@ -10,8 +10,6 @@ pub struct Config<'a> {
 pub struct RunData {
     pub paths: Vec<String>,
     pub cc_flag: bool,
-    pub nc_flag: bool,
-    pub nk_flag: bool,
     pub out_dir: String,
     pub watch_delay: f64,
     pub cycles_per_refresh: i32,
@@ -53,8 +51,6 @@ impl Config<'_> {
                     \n '-r': Recursively search through the selected folder 
                     \n '-w [*Cycle Delay (s)] [*Cycles/Refresh]': Watches for changes in file every cycle; *Optional - Defaults to [{}s] [Every {}cycles/refresh]
                     \n '-c': Converts class and id names from kebab-case to camelCase for .d.ts files
-                    \n '-nc': Converts class and id names from kebab-case to camelCase for css files (No .d.ts files generated)
-                    \n '-nk': Converts from camelCase to kebab-case for css files (No .d.ts files generated)
                     \n '-o [Out-dir]'': Changes output directory
                     \n '-p [Pattern]': Choose pattern to search - Defaults to [{}]
                     \n '-m [Threads]': Enable multi-threaded mode - Defaults to [{} threads]", defaults.delay, defaults.re_index, defaults.pattern, defaults.threads);
@@ -175,8 +171,6 @@ impl RunData {
             Ok(RunData {
                 paths: get_files_recursive(config.query, pattern),
                 cc_flag: camel_case_flag,
-                nc_flag: camel_case_no_out_flag,
-                nk_flag: kebab_case_no_out_flag,
                 out_dir,
                 watch_delay,
                 cycles_per_refresh,
@@ -186,8 +180,6 @@ impl RunData {
             Ok(RunData {
                 paths: get_files(config.query, pattern),
                 cc_flag: camel_case_flag,
-                nc_flag: camel_case_no_out_flag,
-                nk_flag: kebab_case_no_out_flag,
                 out_dir,
                 watch_delay,
                 cycles_per_refresh,
