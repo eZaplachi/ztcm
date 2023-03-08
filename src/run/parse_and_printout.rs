@@ -5,6 +5,7 @@ use std::{
     fs::{self, create_dir_all},
     path::Path,
 };
+mod text;
 
 pub struct ModFlags<'c> {
     pub camel_case_flag: bool,
@@ -12,11 +13,11 @@ pub struct ModFlags<'c> {
     pub out_dir: &'c String,
 }
 
-pub fn parse_and_print(path_names: &[String], mod_flags: ModFlags) {
+pub fn parse_and_print(path_names: &[String], mod_flags: ModFlags, thread_num: i32) {
     for path in path_names {
         let (data_vec, outfile_name) = get_file_data(path, &mod_flags);
         if !outfile_name.contains("global") {
-            print_files(data_vec, outfile_name);
+            print_files(data_vec, outfile_name, thread_num);
         }
     }
 }
@@ -35,9 +36,10 @@ fn get_file_data(path: &String, mod_flags: &ModFlags) -> (HashSet<String>, Strin
         __outfile_name = format!("{}.d.ts", path);
     }
     let contents = fs::read_to_string(path).expect("Something went wrong reading the .css file");
+    let san_contents = remove_comments(&contents);
     let mut out_names = HashSet::new();
     let mut __out_name = String::new();
-    let names = find_classes_or_ids(&contents);
+    let names = get_classes_or_ids(&san_contents);
     for name in names {
         let split_names = split_classes_ids(name);
         for split_name in split_names {
@@ -65,14 +67,19 @@ fn format_line(name: String) -> String {
     format!("readonly '{}': string;", name)
 }
 
-fn print_files(data_set: HashSet<String>, outfile_name: String) {
+fn print_files(data_set: HashSet<String>, outfile_name: String, thread_num: i32) {
     let path_exists = Path::new(&outfile_name).exists();
     let mut _outfile_data = String::new();
     let mut outfile_set = HashSet::new();
     let mut matching_value = false;
     let mut print_out = false;
     if !path_exists {
-        println!("Creating file: {}", outfile_name);
+        if !data_set.len() == 0 {
+            println!(
+                "\x1b[33;1mCreating\x1b[0m(T{}): {}",
+                thread_num, outfile_name
+            );
+        }
     } else {
         _outfile_data =
             fs::read_to_string(&outfile_name).expect("Something went wrong reading the .d.ts file");
@@ -102,15 +109,33 @@ fn print_files(data_set: HashSet<String>, outfile_name: String) {
     if print_out {
         fs::write(outfile_name.clone(), data_string)
             .expect("An Error creating deceleration file occurred");
-        println!("\rWrote to file: {}", outfile_name)
+        println!(
+            "\x1b[32;1mWriting\x1b[0m(T{}): {}\n",
+            thread_num, outfile_name
+        )
     }
+}
+
+fn get_classes_or_ids(text: &str) -> Vec<&str> {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"^[\.\#]+(.+?)\{+|^@value\s\S*").unwrap();
+    }
+    let found_cid = find_classes_or_ids(text);
+    let mut valid_cid = vec![];
+    for cid in found_cid {
+        if RE.is_match(cid) {
+            valid_cid.push(RE.find(cid).unwrap().as_str().remove_last().trim());
+        }
+    }
+    valid_cid
 }
 
 fn find_classes_or_ids(text: &str) -> Vec<&str> {
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"(?m)^[\.\#]+[^\{]*|^@value\s\S*").unwrap();
+        static ref RE: Regex =
+            Regex::new(r"(?ms)^[\.\#]{1}(.+?)\{{1}(.*?)\}{1}|^@value+(.+?);").unwrap();
     }
-    RE.find_iter(text).map(|mat| mat.as_str().trim()).collect()
+    RE.find_iter(text).map(|mat| mat.as_str()).collect()
 }
 
 fn find_declarations(text: &str) -> HashSet<&str> {
@@ -118,6 +143,26 @@ fn find_declarations(text: &str) -> HashSet<&str> {
         static ref RE: Regex = Regex::new(r"readonly '\S*': \w*").unwrap();
     }
     RE.find_iter(text).map(|mat| mat.as_str()).collect()
+}
+
+trait StrExt {
+    fn remove_last(&self) -> &str;
+}
+
+impl StrExt for str {
+    fn remove_last(&self) -> &str {
+        match self.char_indices().next_back() {
+            Some((i, _)) => &self[..i],
+            None => self,
+        }
+    }
+}
+
+fn remove_comments(text: &str) -> String {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"(?s)/\*(.*?)\*/").unwrap();
+    }
+    RE.replace_all(text, "").into_owned()
 }
 
 fn remove_modifiers(text: &str) -> String {
@@ -134,9 +179,7 @@ fn remove_modifiers(text: &str) -> String {
 }
 
 fn check_reserved(word: String) -> bool {
-    let res_string = fs::read_to_string("src/run/reserved_words_ts.txt")
-        .expect("Error - Couldn't read reserved words file");
-    let res_vec = res_string.split('\n');
+    let res_vec = text::ts_reserved_words();
     for res in res_vec {
         if word == res {
             return true;
@@ -207,8 +250,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn find_c_or_id() {
-        let class_or_id = find_classes_or_ids(".testClass {}\n#testId {}\n@value test");
+    fn get_cid() {
+        let class_or_id =
+            get_classes_or_ids(".testClass {}\n#testId {}\n.errorClass {\n@value test;");
         let class_or_id_expected = [".testClass", "#testId", "@value test"];
         assert_eq!(class_or_id, class_or_id_expected)
     }
@@ -235,6 +279,7 @@ mod tests {
                 kebab_case_flag: false,
                 out_dir: &String::new(),
             },
+            1,
         );
         let outputs_expected: Vec<String> = paths_expected
             .into_iter()
@@ -258,8 +303,41 @@ mod tests {
             ModFlags {
                 camel_case_flag: false,
                 kebab_case_flag: false,
+                out_dir: &String::new(),
+            },
+            1,
+        );
+        assert_eq!(Path::new(paths_expected[1]).exists(), true)
+    }
+
+    #[should_panic]
+    #[test]
+    fn print_error_file() {
+        let paths_expected = ["./test/error.module.css", "./test/error.module.css.d.ts"];
+        parse_and_print(
+            &[paths_expected[0].to_string()],
+            ModFlags {
+                camel_case_flag: false,
+                kebab_case_flag: false,
+                out_dir: &String::new(),
+            },
+            1,
+        );
+        assert_eq!(Path::new(paths_expected[1]).exists(), true)
+    }
+
+    #[should_panic]
+    #[test]
+    fn print_empty_file() {
+        let paths_expected = ["./test/empty.module.css", "./test/empty.module.css.d.ts"];
+        parse_and_print(
+            &[paths_expected[0].to_string()],
+            ModFlags {
+                camel_case_flag: false,
+                kebab_case_flag: false,
                 out_dir: &"./test/test_outdir".to_string(),
             },
+            1,
         );
         assert_eq!(Path::new(paths_expected[1]).exists(), true)
     }
@@ -269,6 +347,13 @@ mod tests {
         let (first_char, remainder) = split_first_char("test");
         assert_eq!(first_char, "t");
         assert_eq!(remainder, "est")
+    }
+
+    #[test]
+    fn remove_coms() {
+        let text = "/*\n.commentClass {}\n*/\n.test{}".to_string();
+        let parsed_text = remove_comments(&text);
+        assert_eq!(parsed_text, "\n.test{}")
     }
 
     #[test]

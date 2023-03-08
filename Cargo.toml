@@ -6,8 +6,8 @@ authors = ["Evan Zaplachinski"]
 description = "A simple rust implementation of Typed Css Modules"
 readme = "README.md"
 repository = "https://github.com/eZaplachi/ztcm"
-licence = "MIT"
-licence-file = "LICENSE.txt"
+# licence = "MIT"
+# licence-file = "LICENSE.txt"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

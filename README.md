@@ -47,18 +47,26 @@ console.log(`<div style="color: ${styles.primary}"></div>`);
 
 You can run the program with the following command:
 
-```
+```- `-h` /  `-help` : Show this help 
+- `-r`: Recursively search through the selected folder
+- `-w` `[*Cycle Delay (s)]` `[*Cycles/Refresh]`: Watches for changes in file every cycle;  `*`*Optional* - Defaults to (1s delay) (90cycles/refresh)
+-  `-c`: Converts class and id names from kebab-case to camelCase
+- `-k`: Converts from camelCase to kebab-case
+
+
 ztcm [path('.' for cwd)] [flags]
 ```
 
 **Flags**
 
 - `-h` /  `-help` : Show this help 
+- `-o [Output Directory]`: Chose which directory to output .d.ts files to
+- `-p [Pattern]`: Change pattern from default of '.module.css'
 - `-r`: Recursively search through the selected folder
+- `-m [*Threads]`: Enable multithreaded mode;   `*`*Optional* - Defaults to (2 threads)
 - `-w` `[*Cycle Delay (s)]` `[*Cycles/Refresh]`: Watches for changes in file every cycle;  `*`*Optional* - Defaults to (1s delay) (90cycles/refresh)
--  `-c`: Converts class and id names from kebab-case to camelCase
+-  `-c`: Converts class and id names from kebab-case to camelCase in .d.ts file
 - `-k`: Converts from camelCase to kebab-case
-
 
 
 *This project was intended for learning purposes - not serious use
@@ -68,3 +76,4 @@ ztcm [path('.' for cwd)] [flags]
 
 - http://blog.ssokolow.com/archives/2017/05/13/splitting-camelcase-without-regex-lookaheadlookbehind/
 - https://github.com/BamPeers/rust-ci-github-actions-workflow
+- https://users.rust-lang.org/t/how-to-remove-last-character-from-str/68607/2
