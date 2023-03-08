@@ -313,10 +313,7 @@ mod tests {
     #[should_panic]
     #[test]
     fn print_error_file() {
-        let paths_expected = [
-            "./test/error.module.css",
-            "./test/error.module.css.d.ts",
-        ];
+        let paths_expected = ["./test/error.module.css", "./test/error.module.css.d.ts"];
         parse_and_print(
             &[paths_expected[0].to_string()],
             ModFlags {
@@ -332,10 +329,7 @@ mod tests {
     #[should_panic]
     #[test]
     fn print_empty_file() {
-        let paths_expected = [
-            "./test/empty.module.css",
-            "./test/empty.module.css.d.ts",
-        ];
+        let paths_expected = ["./test/empty.module.css", "./test/empty.module.css.d.ts"];
         parse_and_print(
             &[paths_expected[0].to_string()],
             ModFlags {
@@ -347,7 +341,6 @@ mod tests {
         );
         assert_eq!(Path::new(paths_expected[1]).exists(), true)
     }
-
 
     #[test]
     fn split_string() {
