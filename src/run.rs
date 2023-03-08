@@ -21,28 +21,32 @@ pub fn run_ztcm(args: &[String]) {
 }
 
 fn parse_and_print_out(data: RunData, initial_args: &[String]) {
-    for path in data.paths.clone() {
-        println!("\nFound: {}", path);
+    if data.paths.len() < data.threads as usize {
+        panic!("Error - More threads than files");
     }
+    println!("\n");
+    for path in &data.paths {
+        println!("\x1b[34;1mFound\x1b[0m: {}", path);
+    }
+    println!("\n");
     if data.watch_delay != 0.0 {
         let delay = time::Duration::from_secs_f64(data.watch_delay);
         let mut load_state = 0;
         let mut _load_char = "";
+        let mut load_color = 0;
         let mut i = 0;
         loop {
-            parse_and_print(
-                &data.paths,
-                ModFlags {
-                    camel_case_flag: data.cc_flag,
-                    kebab_case_flag: data.kc_flag,
-                    out_dir: &data.out_dir,
-                },
-            );
+            p_and_p(&data);
             thread::sleep(delay);
             // Loading icon logic
             if i % 2 == 0 {
                 if load_state == 3 {
                     load_state = 0;
+                    if load_color > 3 {
+                        load_color = 0;
+                    } else {
+                        load_color += 1;
+                    }
                 }
                 _load_char = match load_state {
                     0 => "/",
@@ -52,7 +56,13 @@ fn parse_and_print_out(data: RunData, initial_args: &[String]) {
                     _ => "*",
                 };
                 load_state += 1;
-                print!("\r[{}]", _load_char);
+                match load_color {
+                    0 => print!("\r[{}]", _load_char),
+                    1 => print!("\r[\x1b[36m{}\x1b[0m]", _load_char),
+                    2 => print!("\r[\x1b[34m{}\x1b[0m]", _load_char),
+                    3 => print!("\r[\x1b[35m{}\x1b[0m]", _load_char),
+                    _ => print!("\r[{}]", _load_char),
+                }
                 io::stdout().flush().expect("Could not flush stdout");
             }
             if i > data.cycles_per_refresh {
@@ -63,15 +73,41 @@ fn parse_and_print_out(data: RunData, initial_args: &[String]) {
             i += 1;
         }
     } else {
-        parse_and_print(
-            &data.paths,
-            ModFlags {
-                camel_case_flag: data.cc_flag,
-                kebab_case_flag: data.kc_flag,
-                out_dir: &data.out_dir,
-            },
-        );
+        p_and_p(&data);
     }
+}
+
+fn p_and_p(data: &RunData) {
+    let num_of_paths = data.paths.len();
+    let files_per_thread = (num_of_paths as f32 / data.threads as f32).ceil();
+    thread::scope(|s| {
+        for i in 0..data.threads {
+            let mut start_index: f32 = 0.0;
+            let mut end_index: f32 = (i + 1) as f32 * files_per_thread;
+            if !i == 0 {
+                start_index = i as f32 * files_per_thread + 1.0;
+            }
+            if end_index > num_of_paths as f32 {
+                end_index = num_of_paths as f32;
+            }
+            let paths_part: Vec<_> = data.paths[start_index as usize..end_index as usize]
+                .iter()
+                .cloned()
+                .collect();
+            let handle = s.spawn(move || {
+                parse_and_print(
+                    &paths_part,
+                    ModFlags {
+                        camel_case_flag: data.cc_flag,
+                        kebab_case_flag: data.kc_flag,
+                        out_dir: &data.out_dir,
+                    },
+                    i + 1,
+                );
+            });
+            handle.join().unwrap();
+        }
+    });
 }
 
 #[cfg(test)]
