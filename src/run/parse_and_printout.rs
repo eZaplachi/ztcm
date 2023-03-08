@@ -9,7 +9,8 @@ mod text;
 
 pub struct ModFlags<'c> {
     pub camel_case_flag: bool,
-    pub kebab_case_flag: bool,
+    pub camel_case_no_out_flag: bool,
+    pub kebab_case_no_out_flag: bool,
     pub out_dir: &'c String,
 }
 
@@ -49,7 +50,12 @@ fn get_file_data(path: &String, mod_flags: &ModFlags) -> (HashSet<String>, Strin
                     let camel_name = camel_case_converter(&parsed_name);
                     __out_name = format_line(camel_name);
                     out_names.insert(__out_name);
-                } else if mod_flags.kebab_case_flag {
+                } else if mod_flags.camel_case_no_out_flag {
+                    let _test_name = split_name;
+                    let kebab_name = camel_case_converter(&parsed_name);
+                    __out_name = format_line(kebab_name);
+                    out_names.insert(__out_name);
+                } else if mod_flags.kebab_case_no_out_flag {
                     let kebab_name = kebab_case_converter(&parsed_name);
                     __out_name = format_line(kebab_name);
                     out_names.insert(__out_name);
@@ -276,7 +282,8 @@ mod tests {
             &[paths_expected[0].to_string(), paths_expected[1].to_string()],
             ModFlags {
                 camel_case_flag: false,
-                kebab_case_flag: false,
+                camel_case_no_out_flag: false,
+                kebab_case_no_out_flag: false,
                 out_dir: &String::new(),
             },
             1,
@@ -302,7 +309,8 @@ mod tests {
             &[paths_expected[0].to_string()],
             ModFlags {
                 camel_case_flag: false,
-                kebab_case_flag: false,
+                camel_case_no_out_flag: false,
+                kebab_case_no_out_flag: false,
                 out_dir: &String::new(),
             },
             1,
@@ -318,7 +326,8 @@ mod tests {
             &[paths_expected[0].to_string()],
             ModFlags {
                 camel_case_flag: false,
-                kebab_case_flag: false,
+                camel_case_no_out_flag: false,
+                kebab_case_no_out_flag: false,
                 out_dir: &String::new(),
             },
             1,
@@ -334,7 +343,8 @@ mod tests {
             &[paths_expected[0].to_string()],
             ModFlags {
                 camel_case_flag: false,
-                kebab_case_flag: false,
+                camel_case_no_out_flag: false,
+                kebab_case_no_out_flag: false,
                 out_dir: &"./test/test_outdir".to_string(),
             },
             1,
@@ -400,7 +410,8 @@ mod tests {
             &"./test/test.module.css".to_string(),
             &ModFlags {
                 camel_case_flag: false,
-                kebab_case_flag: false,
+                camel_case_no_out_flag: false,
+                kebab_case_no_out_flag: false,
                 out_dir: &String::new(),
             },
         );
@@ -425,7 +436,8 @@ mod tests {
             &"./test/recursive_test/test_r.module.css".to_string(),
             &ModFlags {
                 camel_case_flag: false,
-                kebab_case_flag: false,
+                camel_case_no_out_flag: false,
+                kebab_case_no_out_flag: false,
                 out_dir: &String::new(),
             },
         );
