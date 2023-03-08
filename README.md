@@ -59,7 +59,6 @@ ztcm [path('.' for cwd)] [flags]
 
 **Flags**
 
-```
 - `-h` /  `-help` : Show this help 
 - `-o [Output Directory]`: Chose which directory to output .d.ts files to
 - `-p [Pattern]`: Change pattern from default of '.module.css'
@@ -67,9 +66,8 @@ ztcm [path('.' for cwd)] [flags]
 - `-m [*Threads]`: Enable multithreaded mode;   `*`*Optional* - Defaults to (2 threads)
 - `-w` `[*Cycle Delay (s)]` `[*Cycles/Refresh]`: Watches for changes in file every cycle;  `*`*Optional* - Defaults to (1s delay) (90cycles/refresh)
 -  `-c`: Converts class and id names from kebab-case to camelCase in .d.ts file
-```
 
-*This project was intended for learning purposes - not serious use
+*This project was intended for learning purposes - not serious use*
 
 
 ### References
