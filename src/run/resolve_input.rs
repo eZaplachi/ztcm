@@ -87,8 +87,6 @@ impl RunData {
         let mut cycles_per_refresh: i32 = 0;
         let mut threads: i32 = 1;
         let mut camel_case_flag: bool = false;
-        let mut camel_case_no_out_flag: bool = false;
-        let mut kebab_case_no_out_flag: bool = false;
         let mut out_dir: String = String::new();
         let mut pattern: String = config.defaults.pattern;
         let re_num = Regex::new(r"[0-9]").unwrap();
@@ -104,14 +102,6 @@ impl RunData {
                 "-c" => {
                     print!("[kebab-case --> camelCase .d.ts]{}", custom_tab);
                     camel_case_flag = true;
-                }
-                "-nc" => {
-                    print!("[kebab-case --> camelCase css]{}", custom_tab);
-                    camel_case_no_out_flag = true;
-                }
-                "-nk" => {
-                    print!("[camelCase --> kebab-case css]{}", custom_tab);
-                    kebab_case_no_out_flag = true;
                 }
                 "-o" => {
                     if i + 1 < flags_length && re_word.is_match(flags[i + 1].as_str()) {
@@ -163,9 +153,6 @@ impl RunData {
                 }
                 _ => {}
             }
-        }
-        if camel_case_no_out_flag && kebab_case_no_out_flag {
-            panic!("Can't have both the Camel and Kebab case flags called at once")
         }
         if recursive {
             Ok(RunData {
@@ -220,17 +207,6 @@ fn get_files_recursive(directory: String, pattern: String) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    #[should_panic]
-    fn camel_kebab_case() {
-        let defaults: Defaults = get_defaults();
-        let _res = RunData::find_files(Config {
-            query: "./test".to_string(),
-            flags: vec![&"-nc".to_string(), &"-nk".to_string()],
-            defaults,
-        });
-    }
 
     #[test]
     fn get_file() {
