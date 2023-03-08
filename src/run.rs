@@ -96,7 +96,7 @@ fn p_and_p(data: &RunData) {
                     &paths_part,
                     ModFlags {
                         camel_case_flag: data.cc_flag,
-                        kebab_case_flag: data.kc_flag,
+                        kebab_case_flag: data.nk_flag,
                         out_dir: &data.out_dir,
                     },
                     i + 1,

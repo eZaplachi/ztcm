@@ -10,7 +10,7 @@ pub struct Config<'a> {
 pub struct RunData {
     pub paths: Vec<String>,
     pub cc_flag: bool,
-    pub kc_flag: bool,
+    pub nk_flag: bool,
     pub out_dir: String,
     pub watch_delay: f64,
     pub cycles_per_refresh: i32,
@@ -168,7 +168,7 @@ impl RunData {
             Ok(RunData {
                 paths: get_files_recursive(config.query, pattern),
                 cc_flag: camel_case_flag,
-                kc_flag: kebab_case_flag,
+                nk_flag: kebab_case_flag,
                 out_dir,
                 watch_delay,
                 cycles_per_refresh,
@@ -178,7 +178,7 @@ impl RunData {
             Ok(RunData {
                 paths: get_files(config.query, pattern),
                 cc_flag: camel_case_flag,
-                kc_flag: kebab_case_flag,
+                nk_flag: kebab_case_flag,
                 out_dir,
                 watch_delay,
                 cycles_per_refresh,
