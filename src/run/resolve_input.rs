@@ -225,7 +225,7 @@ mod tests {
     }
 
     #[test]
-    fn get_file_rec() {
+    fn get_file_recursive() {
         let defaults: Defaults = get_defaults();
         let mut test_output_found = (false, false);
         let test_output_expected = (

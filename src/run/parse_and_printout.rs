@@ -231,7 +231,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn get_cid() {
+    fn test_get_classes_or_ids() {
         let class_or_id =
             get_classes_or_ids(".testClass {}\n#testId {}\n.errorClass {\n@value test;");
         let class_or_id_expected = [".testClass", "#testId", "@value test"];
@@ -239,7 +239,7 @@ mod tests {
     }
 
     #[test]
-    fn find_decls() {
+    fn test_find_declarations() {
         let declarations =
             find_declarations("readonly 'test': string;\n readonly 'test2': string;");
         let declarations_expected =
@@ -327,14 +327,14 @@ mod tests {
     }
 
     #[test]
-    fn remove_coms() {
+    fn test_remove_comments() {
         let text = "/*\n.commentClass {}\n*/\n.test{}".to_string();
         let parsed_text = remove_comments(&text);
         assert_eq!(parsed_text, "\n.test{}")
     }
 
     #[test]
-    fn remove_mods() {
+    fn test_remove_modifiers() {
         let parsed_id = remove_modifiers("#test:modifiers");
         let parsed_val = remove_modifiers("@value test");
         assert_eq!(
@@ -344,7 +344,7 @@ mod tests {
     }
 
     #[test]
-    fn check_res() {
+    fn check_reserved_names() {
         let res_true = check_reserved("any".to_string());
         let res_false = check_reserved("test".to_string());
         assert_eq!((res_true, res_false), (true, false))
@@ -357,7 +357,7 @@ mod tests {
     }
 
     #[test]
-    fn get_f_data() {
+    fn test_get_file_data() {
         let file_data_expected: (HashSet<String>, String) = (
             HashSet::from([
                 "readonly 'test-class': string;".to_string(),
@@ -383,7 +383,7 @@ mod tests {
     }
 
     #[test]
-    fn get_f_r_data() {
+    fn test_get_file_recursive_data() {
         let file_data_expected: (HashSet<String>, String) = (
             HashSet::from([
                 "readonly 'R-test-Class': string;".to_string(),
