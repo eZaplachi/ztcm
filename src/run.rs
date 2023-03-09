@@ -118,7 +118,7 @@ mod tests {
     }
 
     #[test]
-    fn new_rec_args() {
+    fn new_recursive_args() {
         let binding = ["ztcm".to_string(), "./test".to_string(), "-r".to_string()];
         let args = Config::new_args(&binding).unwrap();
         assert_eq!(args.query, "./test");
@@ -139,7 +139,7 @@ mod tests {
     }
 
     #[test]
-    fn data() {
+    fn test_get_data() {
         let mut test_output_found = (false, false);
         let test_output_expected = ("test/test.module.css", 0.0);
         let binding = ["ztcm".to_string(), "test".to_string()];
@@ -157,7 +157,7 @@ mod tests {
     }
 
     #[test]
-    fn data_rec() {
+    fn test_get_data_recursive() {
         let mut test_output_found = (false, false, false);
         let test_output_expected = (
             "test/test.module.css",
@@ -181,7 +181,7 @@ mod tests {
     }
 
     #[test]
-    fn data_watch() {
+    fn test_get_data_watch() {
         let mut test_output_found = (false, false, false);
         let test_output_expected = ("test/test.module.css", 1.0, 90);
         let binding = ["ztcm".to_string(), "test".to_string(), "-w".to_string()];
@@ -202,7 +202,7 @@ mod tests {
     }
 
     #[test]
-    fn data_watch_cycle() {
+    fn test_get_data_watch_cycle() {
         let mut test_output_found = (false, false, false);
         let test_output_expected = ("test/test.module.css", 2.0, 120);
         let binding = [
@@ -225,7 +225,6 @@ mod tests {
         if data_res.cycles_per_refresh == test_output_expected.2 {
             test_output_found.2 = true;
         }
-
         assert_eq!(test_output_found, (true, true, true))
     }
 }
