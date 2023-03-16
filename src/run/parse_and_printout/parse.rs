@@ -4,8 +4,8 @@ use std::{
     path::Path,
 };
 
-mod text;
 mod str_ext;
+mod text;
 use str_ext::StrExt;
 
 pub struct ModFlags<'c> {
@@ -64,100 +64,97 @@ fn check_reserved(word: String) -> bool {
     false
 }
 
-// Move below to different file
+#[cfg(test)]
+mod tests {
+    use super::*;
 
+    #[test]
+    fn test_get_classes_or_ids() {
+        let class_or_id =
+            ".testClass {}\n#testId {}\n.errorClass {\n@value test;".get_classes_or_ids();
+        let class_or_id_expected = [".testClass", "#testId", "@value test"];
+        assert_eq!(class_or_id, class_or_id_expected)
+    }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+    #[test]
+    fn split_string() {
+        let (first_char, remainder) = "test".split_first_char();
+        assert_eq!(first_char, "t");
+        assert_eq!(remainder, "est")
+    }
 
-//     #[test]
-//     fn test_get_classes_or_ids() {
-//         let class_or_id =
-//             ".testClass {}\n#testId {}\n.errorClass {\n@value test;".get_classes_or_ids();
-//         let class_or_id_expected = [".testClass", "#testId", "@value test"];
-//         assert_eq!(class_or_id, class_or_id_expected)
-//     }
+    #[test]
+    fn test_remove_comments() {
+        let text = "/*\n.commentClass {}\n*/\n.test{}".to_string();
+        let parsed_text = &text.remove_comments();
+        assert_eq!(parsed_text, &"\n.test{}")
+    }
 
-//     #[test]
-//     fn split_string() {
-//         let (first_char, remainder) = "test".split_first_char();
-//         assert_eq!(first_char, "t");
-//         assert_eq!(remainder, "est")
-//     }
+    #[test]
+    fn test_remove_modifiers() {
+        let parsed_id = "#test:modifiers".remove_modifiers();
+        let parsed_val = "@value test".remove_modifiers();
+        assert_eq!(
+            (parsed_id, parsed_val),
+            ("test".to_string(), "test".to_string())
+        )
+    }
 
-//     #[test]
-//     fn test_remove_comments() {
-//         let text = "/*\n.commentClass {}\n*/\n.test{}".to_string();
-//         let parsed_text = &text.remove_comments();
-//         assert_eq!(parsed_text, &"\n.test{}")
-//     }
+    #[test]
+    fn check_reserved_names() {
+        let res_true = check_reserved("any".to_string());
+        let res_false = check_reserved("test".to_string());
+        assert_eq!((res_true, res_false), (true, false))
+    }
 
-//     #[test]
-//     fn test_remove_modifiers() {
-//         let parsed_id = "#test:modifiers".remove_modifiers();
-//         let parsed_val = "@value test".remove_modifiers();
-//         assert_eq!(
-//             (parsed_id, parsed_val),
-//             ("test".to_string(), "test".to_string())
-//         )
-//     }
+    #[test]
+    fn camel_case() {
+        let name = "Hello-world".camel_case_converter();
+        assert_eq!(name, "helloWorld");
+    }
 
-//     #[test]
-//     fn check_reserved_names() {
-//         let res_true = check_reserved("any".to_string());
-//         let res_false = check_reserved("test".to_string());
-//         assert_eq!((res_true, res_false), (true, false))
-//     }
+    #[test]
+    fn test_parse_file_data() {
+        let file_data_expected: (HashSet<String>, String) = (
+            HashSet::from([
+                "readonly 'test-class': string;".to_string(),
+                "readonly 'test-id': string;".to_string(),
+                "readonly 'test': string;".to_string(),
+                "readonly 'split-test': string;".to_string(),
+            ]),
+            "./test/test.module.css.d.ts".to_string(),
+        );
+        let file_data = parse_file_data(
+            &"./test/test.module.css".to_string(),
+            &ModFlags {
+                camel_case_flag: false,
+                out_dir: &String::new(),
+            },
+        );
+        let mut diff = false;
+        let test: Vec<&String> = file_data.0.difference(&file_data_expected.0).collect();
+        if !test.is_empty() {
+            diff = true
+        }
+        assert_eq!((diff, file_data.1), (false, file_data_expected.1))
+    }
 
-//     #[test]
-//     fn camel_case() {
-//         let name = "Hello-world".camel_case_converter();
-//         assert_eq!(name, "helloWorld");
-//     }
-
-//     #[test]
-//     fn test_parse_file_data() {
-//         let file_data_expected: (HashSet<String>, String) = (
-//             HashSet::from([
-//                 "readonly 'test-class': string;".to_string(),
-//                 "readonly 'test-id': string;".to_string(),
-//                 "readonly 'test': string;".to_string(),
-//                 "readonly 'split-test': string;".to_string(),
-//             ]),
-//             "./test/test.module.css.d.ts".to_string(),
-//         );
-//         let file_data = parse_file_data(
-//             &"./test/test.module.css".to_string(),
-//             &ModFlags {
-//                 camel_case_flag: false,
-//                 out_dir: &String::new(),
-//             },
-//         );
-//         let mut diff = false;
-//         let test: Vec<&String> = file_data.0.difference(&file_data_expected.0).collect();
-//         if !test.is_empty() {
-//             diff = true
-//         }
-//         assert_eq!((diff, file_data.1), (false, file_data_expected.1))
-//     }
-
-//     #[test]
-//     fn test_get_file_recursive_data() {
-//         let file_data_expected: (HashSet<String>, String) = (
-//             HashSet::from([
-//                 "readonly 'R-test-Class': string;".to_string(),
-//                 "readonly 'RtestId': string;".to_string(),
-//             ]),
-//             "./test/recursive_test/test_r.module.css.d.ts".to_string(),
-//         );
-//         let file_data = parse_file_data(
-//             &"./test/recursive_test/test_r.module.css".to_string(),
-//             &ModFlags {
-//                 camel_case_flag: false,
-//                 out_dir: &String::new(),
-//             },
-//         );
-//         assert_eq!(file_data, file_data_expected)
-//     }
-// }
+    #[test]
+    fn test_get_file_recursive_data() {
+        let file_data_expected: (HashSet<String>, String) = (
+            HashSet::from([
+                "readonly 'R-test-Class': string;".to_string(),
+                "readonly 'RtestId': string;".to_string(),
+            ]),
+            "./test/recursive_test/test_r.module.css.d.ts".to_string(),
+        );
+        let file_data = parse_file_data(
+            &"./test/recursive_test/test_r.module.css".to_string(),
+            &ModFlags {
+                camel_case_flag: false,
+                out_dir: &String::new(),
+            },
+        );
+        assert_eq!(file_data, file_data_expected)
+    }
+}
