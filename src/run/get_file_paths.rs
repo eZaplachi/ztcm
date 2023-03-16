@@ -1,6 +1,16 @@
 use glob::glob;
 
-pub fn get_files(directory: String, pattern: String) -> Vec<String> {
+pub fn get_paths(path: String, pattern: String, recursive: bool) -> Vec<String> {
+    let mut _file_paths: Vec<String> = vec![];
+    if recursive {
+        _file_paths = get_files_recursive(path, pattern)
+    } else {
+        _file_paths = get_files(path, pattern)
+    }
+    _file_paths
+}
+
+fn get_files(directory: String, pattern: String) -> Vec<String> {
     let chosen_folder = directory + "/*" + &pattern;
 
     let mut css_file_paths: Vec<String> = Vec::new();
@@ -14,7 +24,7 @@ pub fn get_files(directory: String, pattern: String) -> Vec<String> {
     css_file_paths
 }
 
-pub fn get_files_recursive(directory: String, pattern: String) -> Vec<String> {
+fn get_files_recursive(directory: String, pattern: String) -> Vec<String> {
     let chosen_folder = directory + "/**/*" + &pattern;
 
     let mut css_file_paths: Vec<String> = Vec::new();

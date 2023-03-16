@@ -5,27 +5,25 @@ pub mod args;
 mod get_file_paths;
 mod parse_and_printout;
 use args::Cli;
-use parse_and_printout::{parse_and_print, ModFlags};
+use parse_and_printout::{parse::ModFlags, parse_and_print};
 
 pub fn run_ztcm(cli: Cli) {
     println!("Path: \x1b[36;1;4m{}\x1b[0m\n", cli.path);
     let mut _file_paths: Vec<String> = vec![];
     // if data.paths.len() < data.threads as usize {
     //     panic!("Error - More threads than files");
-    let file_paths: Vec<String> = get_paths(cli.path.clone(), cli.pattern.clone(), cli.recursive);
+    let file_paths: Vec<String> =
+        get_file_paths::get_paths(cli.path.clone(), cli.pattern.clone(), cli.recursive);
     for path in &file_paths {
         println!("\x1b[34;1mFound\x1b[0m: {}", path);
     }
     println!("\n");
 
     if cli.watch == 0.0 {
-        parse_and_pintout(
-            &file_paths,
-            cli.multithread,
-            cli.camel_case,
-            &cli.output.clone(),
-        );
-    } else {watch(cli, file_paths)}
+        parse_and_pintout(&file_paths, cli.multithread, cli.camel_case, &cli.output);
+    } else {
+        watch(cli, file_paths)
+    }
 }
 
 fn watch(cli: Cli, paths: Vec<String>) {
@@ -74,8 +72,8 @@ fn watch(cli: Cli, paths: Vec<String>) {
         }
         if i > cli.update_after_cycles {
             i = 0;
-            print!("\n\nRe-Indexing Files");
-            file_paths = get_paths(path.clone(), pattern.clone(), cli.recursive);
+            println!("\n\n\x1b[33mRe-Indexing Files\x1b[0m");
+            file_paths = get_file_paths::get_paths(path.clone(), pattern.clone(), cli.recursive);
         }
         i += 1;
     }
@@ -108,16 +106,6 @@ fn parse_and_pintout(paths: &Vec<String>, threads: i32, camel_case_flag: bool, o
             handle.join().unwrap();
         }
     });
-}
-
-fn get_paths(path: String, pattern: String, recursive: bool) -> Vec<String> {
-    let mut _file_paths: Vec<String> = vec![];
-    if recursive {
-        _file_paths = get_file_paths::get_files_recursive(path, pattern)
-    } else {
-        _file_paths = get_file_paths::get_files(path, pattern)
-    }
-    _file_paths
 }
 
 // #[cfg(test)]
