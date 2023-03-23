@@ -2,6 +2,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use std::{collections::HashSet, fs, path::Path};
 pub mod parse;
+mod str_ext;
 use parse::{parse_file_data, ModFlags};
 
 pub fn parse_and_print(path_names: &[String], mod_flags: ModFlags, thread_num: i32) {

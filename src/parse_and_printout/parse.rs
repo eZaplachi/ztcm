@@ -4,9 +4,8 @@ use std::{
     path::Path,
 };
 
-mod str_ext;
 mod text;
-use str_ext::StrExt;
+use crate::parse_and_printout::str_ext::StrExt;
 
 pub struct ModFlags<'c> {
     pub camel_case_flag: bool,
