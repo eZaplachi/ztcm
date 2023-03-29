@@ -16,10 +16,12 @@ pub fn print_files(
     let mut print_out = false;
     if !path_exists {
         if !data_set.len() == 0 {
-            println!(
-                "\x1b[33;1mCreating\x1b[0m(T{}): {}",
-                thread_num, outfile_name
-            );
+            let print_text = format!("\x1b[33;1mCreating\x1b[0m: {}", outfile_name);
+            if is_multithreaded {
+                print_multithreaded(print_text, thread_num)
+            } else {
+                println!("{}", print_text)
+            }
         }
     } else {
         _outfile_data =
@@ -68,6 +70,17 @@ fn find_declarations(text: &str) -> HashSet<&str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_print() {
+        let data_set = HashSet::from([
+            "readonly 'test': string;".to_string(),
+            "readonly 'test2': string;".to_string(),
+        ]);
+        let output_name = "./test/test_print.module.css.d.ts".to_string();
+        print_files(data_set, output_name.clone(), false, 1);
+        assert_eq!(Path::new(&output_name).exists(), true)
+    }
 
     #[test]
     fn test_find_declarations() {
