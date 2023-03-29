@@ -1,87 +1,109 @@
-use lazy_static::lazy_static;
-use regex::Regex;
-use std::{collections::HashSet, fs, path::Path};
+use std::{thread, time::Instant};
 pub mod parse;
+mod print;
 mod str_ext;
 use parse::{parse_file_data, ModFlags};
 
-pub fn parse_and_print(path_names: &[String], mod_flags: ModFlags, thread_num: i32) {
-    for path in path_names {
-        let (data_vec, outfile_name) = parse_file_data(path, &mod_flags);
-        if !outfile_name.contains("global") {
-            print_files(data_vec, outfile_name, thread_num);
-        }
+pub fn parse_and_printout(
+    paths: &Vec<String>,
+    threads: i32,
+    camel_case_flag: bool,
+    out_dir: &String,
+    timer: bool,
+) {
+    let mut _is_multithreaded = false;
+    if threads > 1 {
+        _is_multithreaded = true;
     }
-}
-
-fn print_files(data_set: HashSet<String>, outfile_name: String, thread_num: i32) {
-    let path_exists = Path::new(&outfile_name).exists();
-    let mut _outfile_data = String::new();
-    let mut outfile_set = HashSet::new();
-    let mut matching_value = false;
-    let mut print_out = false;
-    if !path_exists {
-        if !data_set.len() == 0 {
-            println!(
-                "\x1b[33;1mCreating\x1b[0m(T{}): {}",
-                thread_num, outfile_name
-            );
-        }
-    } else {
-        _outfile_data =
-            fs::read_to_string(&outfile_name).expect("Something went wrong reading the .d.ts file");
-        outfile_set = find_declarations(&_outfile_data);
-    }
-
-    let mut intermediate_string = String::new();
-    for data in data_set {
-        intermediate_string = format!("{} {}\n", intermediate_string, data);
-        for line in &outfile_set {
-            let formatted_line = format!("{};", line);
-            if data == formatted_line {
-                matching_value = true;
-            }
-        }
-        if !matching_value {
-            print_out = true;
-        }
-        matching_value = false;
-    }
-
-    let data_string = format!(
-        "declare const styles: {{\n{}\n}};\nexport = styles;",
-        intermediate_string
-    );
-
-    if print_out {
-        fs::write(outfile_name.clone(), data_string)
-            .expect("An Error creating deceleration file occurred");
-        println!(
-            "\x1b[32;1mWriting\x1b[0m(T{}): {}\n",
-            thread_num, outfile_name
+    let num_of_paths = paths.len();
+    if threads as usize > num_of_paths {
+        panic!(
+            "Error - More threads ({}) than files ({})",
+            threads, num_of_paths
         )
     }
+    let files_per_thread = (num_of_paths as f32 / threads as f32).ceil();
+    thread::scope(|s| {
+        for i in 0..threads {
+            let start_index: f32 = i as f32 * files_per_thread;
+            let mut end_index: f32 = (i + 1) as f32 * files_per_thread;
+            if end_index > num_of_paths as f32 {
+                end_index = num_of_paths as f32;
+            }
+            let paths_part: Vec<_> = paths[start_index as usize..end_index as usize].to_vec();
+            let handle = s.spawn(move || {
+                parse_and_print(
+                    &paths_part,
+                    ModFlags {
+                        camel_case_flag,
+                        out_dir,
+                    },
+                    _is_multithreaded,
+                    i + 1,
+                    timer,
+                );
+            });
+            handle.join().unwrap();
+        }
+    });
 }
 
-fn find_declarations(text: &str) -> HashSet<&str> {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"readonly '\S*': \w*").unwrap();
+fn parse_and_print(
+    path_names: &[String],
+    mod_flags: ModFlags,
+    is_multithreaded: bool,
+    thread_num: i32,
+    timer: bool,
+) {
+    for path in path_names {
+        if !path.contains("global") {
+            let now_parse = Instant::now();
+            let (data_vec, outfile_name) = parse_file_data(path, &mod_flags);
+            let elapsed_time_parse = now_parse.elapsed();
+            let parsed_time_text = format!(
+                "Parsed {} in {} microseconds",
+                path,
+                elapsed_time_parse.as_micros(),
+            );
+            if timer {
+                if is_multithreaded {
+                    print_multithreaded(parsed_time_text, thread_num);
+                } else {
+                    println!("{}", parsed_time_text);
+                }
+            }
+            let now_print = Instant::now();
+            print::print_files(
+                data_vec,
+                outfile_name.clone(),
+                is_multithreaded,
+                thread_num.clone(),
+            );
+            let elapsed_time_print = now_print.elapsed();
+            let printed_time_text = format!(
+                "Printed {} in {} microseconds",
+                outfile_name,
+                elapsed_time_print.as_micros(),
+            );
+            if timer {
+                if is_multithreaded {
+                    print_multithreaded(printed_time_text, thread_num);
+                } else {
+                    println!("{}", printed_time_text);
+                }
+            }
+        }
     }
-    RE.find_iter(text).map(|mat| mat.as_str()).collect()
+}
+
+pub fn print_multithreaded(text: String, thread_num: i32) {
+    println!("{} (T{})", text, thread_num)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_find_declarations() {
-        let declarations =
-            find_declarations("readonly 'test': string;\n readonly 'test2': string;");
-        let declarations_expected =
-            HashSet::from(["readonly 'test': string", "readonly 'test2': string"]);
-        assert_eq!(declarations, declarations_expected)
-    }
+    use std::path::Path;
 
     #[test]
     fn parse_and_print_files() {
@@ -95,7 +117,9 @@ mod tests {
                 camel_case_flag: false,
                 out_dir: &String::new(),
             },
+            false,
             1,
+            false,
         );
         let outputs_expected: Vec<String> = paths_expected
             .into_iter()
@@ -120,7 +144,9 @@ mod tests {
                 camel_case_flag: false,
                 out_dir: &"test/test_outdir".to_string(),
             },
+            false,
             1,
+            false,
         );
         assert_eq!(Path::new(paths_expected[1]).exists(), true)
     }
@@ -135,7 +161,9 @@ mod tests {
                 camel_case_flag: false,
                 out_dir: &String::new(),
             },
+            false,
             1,
+            false,
         );
         assert_eq!(Path::new(paths_expected[1]).exists(), true)
     }
@@ -150,7 +178,9 @@ mod tests {
                 camel_case_flag: false,
                 out_dir: &"./test/test_outdir".to_string(),
             },
+            false,
             1,
+            false,
         );
         assert_eq!(Path::new(paths_expected[1]).exists(), true)
     }

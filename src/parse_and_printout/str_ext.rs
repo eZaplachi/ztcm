@@ -101,3 +101,46 @@ impl StrExt for str {
         (&self[0..0], self)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_classes_or_ids() {
+        let class_or_id =
+            ".testClass {}\n#testId {}\n.errorClass {\n@value test;".get_classes_or_ids();
+        let class_or_id_expected = [".testClass", "#testId", "@value test"];
+        assert_eq!(class_or_id, class_or_id_expected)
+    }
+
+    #[test]
+    fn split_string() {
+        let (first_char, remainder) = "test".split_first_char();
+        assert_eq!(first_char, "t");
+        assert_eq!(remainder, "est")
+    }
+
+    #[test]
+    fn test_remove_comments() {
+        let text = "/*\n.commentClass {}\n*/\n.test{}".to_string();
+        let parsed_text = &text.remove_comments();
+        assert_eq!(parsed_text, &"\n.test{}")
+    }
+
+    #[test]
+    fn test_remove_modifiers() {
+        let parsed_id = "#test:modifiers".remove_modifiers();
+        let parsed_val = "@value test".remove_modifiers();
+        assert_eq!(
+            (parsed_id, parsed_val),
+            ("test".to_string(), "test".to_string())
+        )
+    }
+
+    #[test]
+    fn camel_case() {
+        let name = "Hello-world".camel_case_converter();
+        assert_eq!(name, "helloWorld");
+    }
+}

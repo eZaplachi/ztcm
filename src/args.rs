@@ -20,6 +20,9 @@ pub struct Cli {
     /// Search the given PATH recursively
     #[arg(short, long)]
     pub recursive: bool,
+    /// Shows the ammount of time it takes to run each step
+    #[arg(short, long)]
+    pub timer: bool,
     /// Set number of watch cycles to pass before re-indexing files
     #[arg(short, long, value_parser = clap::value_parser!(i32), default_value = "45", num_args=0..=1, require_equals=true)]
     pub update_after_cycles: i32,

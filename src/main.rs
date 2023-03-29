@@ -1,12 +1,15 @@
 use clap::Parser;
-use std::{io, thread, time};
+use std::{
+    io::{self, Write},
+    thread,
+    time::{Duration, Instant},
+};
 // Brings stdout flush in scope for load message
-use std::io::Write;
 pub mod args;
 mod get_file_paths;
 mod parse_and_printout;
 use args::Cli;
-use parse_and_printout::{parse::ModFlags, parse_and_print};
+use parse_and_printout::parse_and_printout;
 
 fn main() {
     let cli: Cli = Cli::parse();
@@ -21,22 +24,33 @@ fn run_ztcm(cli: Cli) {
     let mut _file_paths: Vec<String> = vec![];
     // if data.paths.len() < data.threads as usize {
     //     panic!("Error - More threads than files");
+    let now = Instant::now();
     let file_paths: Vec<String> =
         get_file_paths::get_paths(cli.path.clone(), cli.pattern.clone(), cli.recursive);
     for path in &file_paths {
         println!("\x1b[34;1mFound\x1b[0m: {}", path);
     }
+    let elapsed_time = now.elapsed();
+    if cli.timer {
+        println!("In {} microseconds.", elapsed_time.as_micros());
+    }
     println!("\n");
 
     if cli.watch == 0.0 {
-        parse_and_pintout(&file_paths, cli.multithread, cli.camel_case, &cli.output);
+        parse_and_printout(
+            &file_paths,
+            cli.multithread,
+            cli.camel_case,
+            &cli.output,
+            cli.timer,
+        );
     } else {
         watch(cli, file_paths)
     }
 }
 
 fn watch(cli: Cli, paths: Vec<String>) {
-    let delay = time::Duration::from_secs_f64(cli.watch);
+    let delay = Duration::from_secs_f64(cli.watch);
     let mut file_paths: Vec<String> = paths;
     let mut load_state = 0;
     let mut _load_char = "";
@@ -45,11 +59,12 @@ fn watch(cli: Cli, paths: Vec<String>) {
     let path = cli.path;
     let pattern = cli.pattern;
     loop {
-        parse_and_pintout(
+        parse_and_printout(
             &file_paths,
             cli.multithread,
             cli.camel_case,
             &cli.output.clone(),
+            cli.timer,
         );
         thread::sleep(delay);
         // Loading icon logic
@@ -86,35 +101,6 @@ fn watch(cli: Cli, paths: Vec<String>) {
         }
         i += 1;
     }
-}
-
-fn parse_and_pintout(paths: &Vec<String>, threads: i32, camel_case_flag: bool, out_dir: &String) {
-    let num_of_paths = paths.len();
-    let files_per_thread = (num_of_paths as f32 / threads as f32).ceil();
-    thread::scope(|s| {
-        for i in 0..threads {
-            let mut start_index: f32 = 0.0;
-            let mut end_index: f32 = (i + 1) as f32 * files_per_thread;
-            if !i == 0 {
-                start_index = i as f32 * files_per_thread + 1.0;
-            }
-            if end_index > num_of_paths as f32 {
-                end_index = num_of_paths as f32;
-            }
-            let paths_part: Vec<_> = paths[start_index as usize..end_index as usize].to_vec();
-            let handle = s.spawn(move || {
-                parse_and_print(
-                    &paths_part,
-                    ModFlags {
-                        camel_case_flag,
-                        out_dir,
-                    },
-                    i + 1,
-                );
-            });
-            handle.join().unwrap();
-        }
-    });
 }
 
 // #[cfg(test)]
