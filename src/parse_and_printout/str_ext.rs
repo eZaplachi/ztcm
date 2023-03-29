@@ -2,6 +2,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 pub trait StrExt {
+    fn split_first_char(&self) -> (&str, &str);
     fn remove_last(&self) -> &str;
     fn remove_comments(&self) -> String;
     fn remove_modifiers(&self) -> String;
@@ -9,10 +10,19 @@ pub trait StrExt {
     fn find_classes_or_ids(&self) -> Vec<&str>;
     fn split_classes_ids(&self) -> Vec<&str>;
     fn camel_case_converter(&self) -> String;
-    fn split_first_char(&self) -> (&str, &str);
 }
 
 impl StrExt for str {
+    fn split_first_char(&self) -> (&str, &str) {
+        for i in 1..5 {
+            let r = self.get(0..i);
+            if let Some(x) = r {
+                return (x, &self[i..]);
+            }
+        }
+        (&self[0..0], self)
+    }
+
     fn remove_last(&self) -> &str {
         match self.char_indices().next_back() {
             Some((i, _)) => &self[..i],
@@ -90,21 +100,21 @@ impl StrExt for str {
         }
         parsed_name
     }
-
-    fn split_first_char(&self) -> (&str, &str) {
-        for i in 1..5 {
-            let r = self.get(0..i);
-            if let Some(x) = r {
-                return (x, &self[i..]);
-            }
-        }
-        (&self[0..0], self)
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_split_string() {
+        assert_eq!("test".split_first_char(), ("t", "est"))
+    }
+
+    #[test]
+    fn test_remove_last() {
+        assert_eq!("test".remove_last(), "tes")
+    }
 
     #[test]
     fn test_get_classes_or_ids() {
@@ -115,10 +125,11 @@ mod tests {
     }
 
     #[test]
-    fn split_string() {
-        let (first_char, remainder) = "test".split_first_char();
-        assert_eq!(first_char, "t");
-        assert_eq!(remainder, "est")
+    fn test_find_classes_or_ids() {
+        let class_or_id =
+            ".testClass {}\n#testId {}\n.errorClass {\n@value test;".find_classes_or_ids();
+        let class_or_id_expected = [".testClass {}", "#testId {}", "@value test;"];
+        assert_eq!(class_or_id, class_or_id_expected)
     }
 
     #[test]
@@ -135,6 +146,15 @@ mod tests {
         assert_eq!(
             (parsed_id, parsed_val),
             ("test".to_string(), "test".to_string())
+        )
+    }
+
+    #[test]
+    fn test_split_classes_or_ids() {
+        let classes_or_ids = "#testClass, .testId";
+        assert_eq!(
+            classes_or_ids.split_classes_ids(),
+            ["#testClass", ".testId"]
         )
     }
 

@@ -31,8 +31,7 @@ pub fn print_files(
     for data in data_set {
         intermediate_string = format!("{} {}\n", intermediate_string, data);
         for line in &outfile_set {
-            let formatted_line = format!("{};", line);
-            if data == formatted_line {
+            if &&data == line {
                 matching_value = true;
             }
         }
@@ -61,7 +60,7 @@ pub fn print_files(
 
 fn find_declarations(text: &str) -> HashSet<&str> {
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"readonly '\S*': \w*").unwrap();
+        static ref RE: Regex = Regex::new(r"readonly '\S*': \w*;").unwrap();
     }
     RE.find_iter(text).map(|mat| mat.as_str()).collect()
 }
@@ -75,7 +74,7 @@ mod tests {
         let declarations =
             find_declarations("readonly 'test': string;\n readonly 'test2': string;");
         let declarations_expected =
-            HashSet::from(["readonly 'test': string", "readonly 'test2': string"]);
+            HashSet::from(["readonly 'test': string;", "readonly 'test2': string;"]);
         assert_eq!(declarations, declarations_expected)
     }
 }

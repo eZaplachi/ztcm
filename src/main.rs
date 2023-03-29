@@ -34,7 +34,7 @@ fn run_ztcm(cli: Cli) {
     if cli.timer {
         println!("In {} microseconds.", elapsed_time.as_micros());
     }
-    println!("\n");
+    print!("\n");
 
     if cli.watch == 0.0 {
         parse_and_printout(

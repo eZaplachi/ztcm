@@ -72,24 +72,26 @@ fn parse_and_print(
                     println!("{}", parsed_time_text);
                 }
             }
-            let now_print = Instant::now();
-            print::print_files(
-                data_vec,
-                outfile_name.clone(),
-                is_multithreaded,
-                thread_num.clone(),
-            );
-            let elapsed_time_print = now_print.elapsed();
-            let printed_time_text = format!(
-                "Printed {} in {} microseconds",
-                outfile_name,
-                elapsed_time_print.as_micros(),
-            );
-            if timer {
-                if is_multithreaded {
-                    print_multithreaded(printed_time_text, thread_num);
-                } else {
-                    println!("{}", printed_time_text);
+            if !data_vec.is_empty() {
+                let now_print = Instant::now();
+                print::print_files(
+                    data_vec,
+                    outfile_name.clone(),
+                    is_multithreaded,
+                    thread_num.clone(),
+                );
+                let elapsed_time_print = now_print.elapsed();
+                let printed_time_text = format!(
+                    "Compared .css data to {} in {} microseconds",
+                    outfile_name,
+                    elapsed_time_print.as_micros(),
+                );
+                if timer {
+                    if is_multithreaded {
+                        print_multithreaded(printed_time_text, thread_num);
+                    } else {
+                        println!("{}", printed_time_text);
+                    }
                 }
             }
         }
@@ -149,6 +151,18 @@ mod tests {
             false,
         );
         assert_eq!(Path::new(paths_expected[1]).exists(), true)
+    }
+
+    #[should_panic]
+    #[test]
+    fn parse_and_print_too_many_threads() {
+        parse_and_printout(
+            &vec!["./test/test.module.css".to_string()],
+            9999,
+            false,
+            &"./test/".to_string(),
+            false,
+        );
     }
 
     #[should_panic]
