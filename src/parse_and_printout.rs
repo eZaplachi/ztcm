@@ -11,12 +11,14 @@ pub fn parse_and_printout(
     out_dir: &String,
     timer: bool,
 ) {
+    let now_parse_and_printout = Instant::now();
     let mut _is_multithreaded = false;
     if threads > 1 {
         _is_multithreaded = true;
     }
     let num_of_paths = paths.len();
     if threads as usize > num_of_paths {
+        // TODO Fix
         panic!(
             "Error - More threads ({}) than files ({})",
             threads, num_of_paths
@@ -46,6 +48,13 @@ pub fn parse_and_printout(
             handle.join().unwrap();
         }
     });
+    if timer {
+        let duration_parse_and_printout = now_parse_and_printout.elapsed();
+        println!(
+            "Parse and printout total: {} microseconds",
+            duration_parse_and_printout.as_micros()
+        );
+    }
 }
 
 fn parse_and_print(

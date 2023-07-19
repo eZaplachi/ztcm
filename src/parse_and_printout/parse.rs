@@ -21,9 +21,9 @@ pub fn parse_file_data(path: &String, mod_flags: &ModFlags) -> (HashSet<String>,
         let mod_path = mod_flags.out_dir.to_owned()
             + "/"
             + path.split('/').last().expect("Error parsing file name");
-        __outfile_name = format!("{}.d.ts", mod_path);
+        __outfile_name = format!("{}.ts", mod_path);
     } else {
-        __outfile_name = format!("{}.d.ts", path);
+        __outfile_name = format!("{}.ts", path);
     }
     let contents = fs::read_to_string(path).expect("Something went wrong reading the .css file");
     let mut out_names = HashSet::new();
@@ -86,7 +86,7 @@ mod tests {
                 "readonly 'test': string;".to_string(),
                 "readonly 'split-test': string;".to_string(),
             ]),
-            "./test/test.module.css.d.ts".to_string(),
+            "./test/test.module.css.ts".to_string(),
         );
         let file_data = parse_file_data(
             &"./test/test.module.css".to_string(),

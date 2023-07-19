@@ -24,8 +24,8 @@ pub fn print_files(
             }
         }
     } else {
-        _outfile_data =
-            fs::read_to_string(&outfile_name).expect("Something went wrong reading the .d.ts file");
+        _outfile_data = fs::read_to_string(&outfile_name)
+            .expect("Something went wrong reading the .css.ts file");
         outfile_set = find_declarations(&_outfile_data);
     }
 
@@ -77,7 +77,7 @@ mod tests {
             "readonly 'test': string;".to_string(),
             "readonly 'test2': string;".to_string(),
         ]);
-        let output_name = "./test/test_print.module.css.d.ts".to_string();
+        let output_name = "./test/test_print.module.css.ts".to_string();
         print_files(data_set, output_name.clone(), false, 1);
         assert_eq!(Path::new(&output_name).exists(), true)
     }
