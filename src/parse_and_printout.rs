@@ -157,18 +157,6 @@ mod tests {
         assert_eq!(Path::new(paths_expected[1]).exists(), true)
     }
 
-    // #[should_panic]
-    // #[test]
-    // fn parse_and_print_too_many_threads() {
-    //     parse_and_printout(
-    //         &vec!["./test/test.module.css".to_string()],
-    //         9999,
-    //         false,
-    //         &"./test/".to_string(),
-    //         false,
-    //     );
-    // }
-    //
     #[should_panic]
     #[test]
     fn print_error_file() {
