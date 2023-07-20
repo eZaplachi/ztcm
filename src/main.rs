@@ -22,8 +22,6 @@ fn main() {
 fn run_ztcm(cli: Cli) {
     println!("Path: \x1b[36;1;4m{}\x1b[0m\n", cli.path);
     let mut _file_paths: Vec<String> = vec![];
-    // if data.paths.len() < data.threads as usize {
-    //     panic!("Error - More threads than files");
     let now = Instant::now();
     let file_paths: Vec<String> =
         get_file_paths::get_paths(cli.path.clone(), cli.pattern.clone(), cli.recursive);
@@ -34,7 +32,7 @@ fn run_ztcm(cli: Cli) {
     if cli.timer {
         println!("In {} microseconds.", elapsed_time.as_micros());
     }
-    print!("\n");
+    println!();
 
     if cli.watch == 0.0 {
         parse_and_printout(

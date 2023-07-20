@@ -33,7 +33,7 @@ pub fn print_files(
     for data in data_set {
         intermediate_string = format!("{} {}\n", intermediate_string, data);
         for line in &outfile_set {
-            if &&data == line {
+            if &data == line {
                 matching_value = true;
             }
         }
@@ -44,7 +44,7 @@ pub fn print_files(
     }
 
     let data_string = format!(
-        "declare const styles: {{\n{}\n}};\nexport = styles;",
+        "declare const styles: {{\n{}\n}};\nexport default styles;",
         intermediate_string
     );
 

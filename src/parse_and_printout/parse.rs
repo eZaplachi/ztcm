@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-mod text;
+mod reserved_text;
 use crate::parse_and_printout::str_ext::StrExt;
 
 pub struct ModFlags<'c> {
@@ -54,7 +54,7 @@ fn format_line(name: String) -> String {
 }
 
 fn check_reserved(word: String) -> bool {
-    let res_vec = text::ts_reserved_words();
+    let res_vec = reserved_text::ts_reserved_words();
     for res in res_vec {
         if word == res {
             return true;
@@ -123,7 +123,7 @@ mod tests {
                 "readonly 'R-test-Class': string;".to_string(),
                 "readonly 'RtestId': string;".to_string(),
             ]),
-            "./test/recursive_test/test_r.module.css.d.ts".to_string(),
+            "./test/recursive_test/test_r.module.css.ts".to_string(),
         );
         let file_data = parse_file_data(
             &"./test/recursive_test/test_r.module.css".to_string(),
