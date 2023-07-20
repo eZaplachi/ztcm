@@ -13,17 +13,8 @@ use parse_and_printout::parse_and_printout;
 
 fn main() {
     let cli: Cli = Cli::parse();
-    // println!("{cli:#?}");
-    let mut _files_paths: Vec<String> = vec![];
-    // let args: Vec<String> = env::args().collect();
-    run_ztcm(cli)
-}
-
-fn run_ztcm(cli: Cli) {
     println!("Path: \x1b[36;1;4m{}\x1b[0m\n", cli.path);
     let mut _file_paths: Vec<String> = vec![];
-    // if data.paths.len() < data.threads as usize {
-    //     panic!("Error - More threads than files");
     let now = Instant::now();
     let file_paths: Vec<String> =
         get_file_paths::get_paths(cli.path.clone(), cli.pattern.clone(), cli.recursive);
@@ -34,7 +25,7 @@ fn run_ztcm(cli: Cli) {
     if cli.timer {
         println!("In {} microseconds.", elapsed_time.as_micros());
     }
-    print!("\n");
+    println!();
 
     if cli.watch == 0.0 {
         parse_and_printout(
@@ -102,126 +93,3 @@ fn watch(cli: Cli, paths: Vec<String>) {
         i += 1;
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     #[test]
-//     fn new_args() {
-//         let binding = ["ztcm".to_string(), "./test".to_string()];
-//         let args = Config::new_args(&binding).unwrap();
-//         assert_eq!(args.query, "./test")
-//     }
-
-//     #[test]
-//     fn new_recursive_args() {
-//         let binding = ["ztcm".to_string(), "./test".to_string(), "-r".to_string()];
-//         let args = Config::new_args(&binding).unwrap();
-//         assert_eq!(args.query, "./test");
-//         assert_eq!(args.flags, vec![&"-r".to_string()])
-//     }
-
-//     #[test]
-//     fn new_watch_args() {
-//         let binding = [
-//             "ztcm".to_string(),
-//             "./test".to_string(),
-//             "-w".to_string(),
-//             "2".to_string(),
-//         ];
-//         let args = Config::new_args(&binding).unwrap();
-//         assert_eq!(args.query, "./test");
-//         assert_eq!(args.flags, vec![&"-w".to_string(), &"2".to_string()])
-//     }
-
-//     #[test]
-//     fn test_get_data() {
-//         let mut test_output_found = (false, false);
-//         let test_output_expected = ("test/test.module.css", 0.0);
-//         let binding = ["ztcm".to_string(), "test".to_string()];
-//         let config: Config = Config::new_args(&binding).unwrap();
-//         let data_res = RunData::find_files(config).unwrap();
-//         for pathname in data_res.paths {
-//             if pathname == test_output_expected.0 {
-//                 test_output_found.0 = true;
-//             }
-//         }
-//         if data_res.watch_delay == test_output_expected.1 {
-//             test_output_found.1 = true;
-//         }
-//         assert_eq!(test_output_found, (true, true))
-//     }
-
-//     #[test]
-//     fn test_get_data_recursive() {
-//         let mut test_output_found = (false, false, false);
-//         let test_output_expected = (
-//             "test/test.module.css",
-//             "test/recursive_test/test_r.module.css",
-//             0.0,
-//         );
-//         let binding = ["ztcm".to_string(), "test".to_string(), "-r".to_string()];
-//         let config: Config = Config::new_args(&binding).unwrap();
-//         let data_res = RunData::find_files(config).unwrap();
-//         for pathname in data_res.paths {
-//             if pathname == test_output_expected.0 {
-//                 test_output_found.0 = true;
-//             } else if pathname == test_output_expected.1 {
-//                 test_output_found.1 = true;
-//             }
-//         }
-//         if data_res.watch_delay == test_output_expected.2 {
-//             test_output_found.2 = true;
-//         }
-//         assert_eq!(test_output_found, (true, true, true))
-//     }
-
-//     #[test]
-//     fn test_get_data_watch() {
-//         let mut test_output_found = (false, false, false);
-//         let test_output_expected = ("test/test.module.css", 1.0, 90);
-//         let binding = ["ztcm".to_string(), "test".to_string(), "-w".to_string()];
-//         let config: Config = Config::new_args(&binding).unwrap();
-//         let data_res = RunData::find_files(config).unwrap();
-//         for pathname in data_res.paths {
-//             if pathname == test_output_expected.0 {
-//                 test_output_found.0 = true;
-//             }
-//         }
-//         if data_res.watch_delay == test_output_expected.1 {
-//             test_output_found.1 = true;
-//         }
-//         if data_res.cycles_per_refresh == test_output_expected.2 {
-//             test_output_found.2 = true;
-//         }
-//         assert_eq!(test_output_found, (true, true, true))
-//     }
-
-//     #[test]
-//     fn test_get_data_watch_cycle() {
-//         let mut test_output_found = (false, false, false);
-//         let test_output_expected = ("test/test.module.css", 2.0, 120);
-//         let binding = [
-//             "ztcm".to_string(),
-//             "test".to_string(),
-//             "-w".to_string(),
-//             "2".to_string(),
-//             "120".to_string(),
-//         ];
-//         let config: Config = Config::new_args(&binding).unwrap();
-//         let data_res = RunData::find_files(config).unwrap();
-//         for pathname in data_res.paths {
-//             if pathname == test_output_expected.0 {
-//                 test_output_found.0 = true;
-//             }
-//         }
-//         if data_res.watch_delay == test_output_expected.1 {
-//             test_output_found.1 = true;
-//         }
-//         if data_res.cycles_per_refresh == test_output_expected.2 {
-//             test_output_found.2 = true;
-//         }
-//         assert_eq!(test_output_found, (true, true, true))
-//     }
-// }

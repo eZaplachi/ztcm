@@ -8,7 +8,7 @@ pub struct Cli {
     #[arg(short, long)]
     /// Converts output from kebab-case to camelCase in .d.ts files
     pub camel_case: bool,
-    /// Enable multithreaded mode and set the number of threads to run with  -- Can't exceed number of .css files;
+    /// Enable multithreaded mode and set the number of threads to run with |
     /// calling the flag without a value defaults to (2 threads)
     #[arg(short, long, value_name = "THREADS", value_parser = clap::value_parser!(i32).range(1..32), default_value="1", num_args=0..=1, require_equals=true, default_missing_value = "2")]
     pub multithread: i32,

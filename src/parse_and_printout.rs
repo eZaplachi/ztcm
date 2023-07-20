@@ -4,6 +4,7 @@ mod print;
 mod str_ext;
 use parse::{parse_file_data, ModFlags};
 
+// Manage Threads
 pub fn parse_and_printout(
     paths: &Vec<String>,
     threads: i32,
@@ -11,20 +12,20 @@ pub fn parse_and_printout(
     out_dir: &String,
     timer: bool,
 ) {
+    let now_parse_and_printout = Instant::now();
     let mut _is_multithreaded = false;
     if threads > 1 {
         _is_multithreaded = true;
     }
     let num_of_paths = paths.len();
-    if threads as usize > num_of_paths {
-        panic!(
-            "Error - More threads ({}) than files ({})",
-            threads, num_of_paths
-        )
+    let mut max_threads = num_of_paths as i32;
+    let mut files_per_thread = 1.0;
+    if threads as usize <= num_of_paths {
+        files_per_thread = (num_of_paths as f32 / threads as f32).ceil();
+        max_threads = threads;
     }
-    let files_per_thread = (num_of_paths as f32 / threads as f32).ceil();
     thread::scope(|s| {
-        for i in 0..threads {
+        for i in 0..max_threads {
             let start_index: f32 = i as f32 * files_per_thread;
             let mut end_index: f32 = (i + 1) as f32 * files_per_thread;
             if end_index > num_of_paths as f32 {
@@ -46,8 +47,16 @@ pub fn parse_and_printout(
             handle.join().unwrap();
         }
     });
+    if timer {
+        let duration_parse_and_printout = now_parse_and_printout.elapsed();
+        println!(
+            "Parse and printout total: {} microseconds",
+            duration_parse_and_printout.as_micros()
+        );
+    }
 }
 
+// Logic
 fn parse_and_print(
     path_names: &[String],
     mod_flags: ModFlags,
@@ -74,12 +83,7 @@ fn parse_and_print(
             }
             if !data_vec.is_empty() {
                 let now_print = Instant::now();
-                print::print_files(
-                    data_vec,
-                    outfile_name.clone(),
-                    is_multithreaded,
-                    thread_num.clone(),
-                );
+                print::print_files(data_vec, outfile_name.clone(), is_multithreaded, thread_num);
                 let elapsed_time_print = now_print.elapsed();
                 let printed_time_text = format!(
                     "Compared .css data to {} in {} microseconds",
@@ -125,7 +129,7 @@ mod tests {
         );
         let outputs_expected: Vec<String> = paths_expected
             .into_iter()
-            .map(|path| path.to_owned() + ".d.ts")
+            .map(|path| path.to_owned() + ".ts")
             .collect();
         let path_exists = (
             Path::new(&outputs_expected[0]).exists(),
@@ -138,7 +142,7 @@ mod tests {
     fn parse_and_print_outdir() {
         let paths_expected = [
             "./test/test.module.css",
-            "./test/test_outdir/test.module.css.d.ts",
+            "./test/test_outdir/test.module.css.ts",
         ];
         parse_and_print(
             &[paths_expected[0].to_string()],
@@ -155,20 +159,8 @@ mod tests {
 
     #[should_panic]
     #[test]
-    fn parse_and_print_too_many_threads() {
-        parse_and_printout(
-            &vec!["./test/test.module.css".to_string()],
-            9999,
-            false,
-            &"./test/".to_string(),
-            false,
-        );
-    }
-
-    #[should_panic]
-    #[test]
     fn print_error_file() {
-        let paths_expected = ["./test/error.module.css", "./test/error.module.css.d.ts"];
+        let paths_expected = ["./test/error.module.css", "./test/error.module.css.ts"];
         parse_and_print(
             &[paths_expected[0].to_string()],
             ModFlags {
@@ -185,7 +177,7 @@ mod tests {
     #[should_panic]
     #[test]
     fn print_empty_file() {
-        let paths_expected = ["./test/empty.module.css", "./test/empty.module.css.d.ts"];
+        let paths_expected = ["./test/empty.module.css", "./test/empty.module.css.ts"];
         parse_and_print(
             &[paths_expected[0].to_string()],
             ModFlags {

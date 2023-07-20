@@ -24,8 +24,8 @@ pub fn print_files(
             }
         }
     } else {
-        _outfile_data =
-            fs::read_to_string(&outfile_name).expect("Something went wrong reading the .d.ts file");
+        _outfile_data = fs::read_to_string(&outfile_name)
+            .expect("Something went wrong reading the .css.ts file");
         outfile_set = find_declarations(&_outfile_data);
     }
 
@@ -33,7 +33,7 @@ pub fn print_files(
     for data in data_set {
         intermediate_string = format!("{} {}\n", intermediate_string, data);
         for line in &outfile_set {
-            if &&data == line {
+            if &data == line {
                 matching_value = true;
             }
         }
@@ -44,7 +44,7 @@ pub fn print_files(
     }
 
     let data_string = format!(
-        "declare const styles: {{\n{}\n}};\nexport = styles;",
+        "declare const styles: {{\n{}\n}};\nexport default styles;",
         intermediate_string
     );
 
@@ -77,7 +77,7 @@ mod tests {
             "readonly 'test': string;".to_string(),
             "readonly 'test2': string;".to_string(),
         ]);
-        let output_name = "./test/test_print.module.css.d.ts".to_string();
+        let output_name = "./test/test_print.module.css.ts".to_string();
         print_files(data_set, output_name.clone(), false, 1);
         assert_eq!(Path::new(&output_name).exists(), true)
     }
