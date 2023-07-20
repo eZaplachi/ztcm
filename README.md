@@ -1,4 +1,3 @@
-
 [![codecov](https://codecov.io/gh/eZaplachi/ztcm/branch/main/graph/badge.svg?token=V8CJWT9BQK)](https://codecov.io/gh/eZaplachi/ztcm)
 
 # Zap's Typed Css Modules
@@ -19,22 +18,22 @@ If you have the following css,
 }
 ```
 
-typed-css-modules creates the following .d.ts files from the above css:
+typed-css-modules creates the following .css.ts files from the above css:
 
 ```ts
-/* styles.css.d.ts */
+/* styles.css.ts */
 declare const styles: {
   readonly primary: string;
   readonly myClass: string;
 };
-export = styles;
+export default styles;
 ```
 
 So, you can import CSS modules' class or variable into your TypeScript sources:
 
 ```ts
 /* app.ts */
-import styles from './styles.css';
+import styles from "./styles.css";
 console.log(`<div class="${styles.myClass}"></div>`);
 console.log(`<div style="color: ${styles.primary}"></div>`);
 ```
@@ -47,28 +46,23 @@ console.log(`<div style="color: ${styles.primary}"></div>`);
 
 You can run the program with the following command:
 
-- `-h` /  `-help` : Show this help 
-- `-r`: Recursively search through the selected folder
-- `-w` `[*Cycle Delay (s)]` `[*Cycles/Refresh]`: Watches for changes in file every cycle;  `*`*Optional* - Defaults to (1s delay) (90cycles/refresh)
--  `-c`: Converts class and id names from kebab-case to camelCase
-- `-k`: Converts from camelCase to kebab-case
-
 ```
-ztcm [path('.' for cwd)] [flags]
+ztcm [PATH('.' for cwd)] [FLAGS]
 ```
 
 **Flags**
 
-- `-h` /  `-help` : Show this help 
-- `-o [Output Directory]`: Chose which directory to output .d.ts files to
-- `-p [Pattern]`: Change pattern from default of '.module.css'
-- `-r`: Recursively search through the selected folder
-- `-m [*Threads]`: Enable multithreaded mode;   `*`*Optional* - Defaults to (2 threads)
-- `-w` `[*Cycle Delay (s)]` `[*Cycles/Refresh]`: Watches for changes in file every cycle;  `*`*Optional* - Defaults to (1s delay) (90cycles/refresh)
--  `-c`: Converts class and id names from kebab-case to camelCase in .d.ts file
+- `-h, --help` : Show help
+- `-v, --version` : Show version number
+- `-c, --camel_case`: Converts output from kebab-case to camelCase in .css.ts files (_Unstable_)
+- `-r, --recursive`: Recursively search through the selected folder
+- `-t, --timer`: Show timer;
+- `-o , --output[=Output Directory]`: Chose which directory to output .css.ts files to (default: same dict as .module.css file)
+- `-p, --pattern[=Pattern]`: Change search pattern from (default: '.module.css')
+- `-w, --watch[=<DELAY(s)>]` Enable watch and optionally set the watch delay; calling the flag without a value defaults to (1.0s)
+- `-u, --update-after-cycles[=<UPDATE_AFTER_CYCLES>]` Set number of _watch_ cycles to pass before re-indexing files (default: 45)
 
-*This project was intended for learning purposes - not serious use*
-
+_This project was intended for learning purposes - not serious use_
 
 ### References
 
